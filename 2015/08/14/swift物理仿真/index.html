@@ -1,0 +1,358 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="swift,物理仿真," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="最近搞了一下物理仿真行为，demo效果如下，一共分为3部分一、拖拽上面的灰色view产生新的view二、下面的view之间的相互碰撞三、双击时以小方块的形式向外面散去">
+<meta property="og:type" content="article">
+<meta property="og:title" content="swift物理仿真">
+<meta property="og:url" content="http://yoursite.com/2015/08/14/swift物理仿真/index.html">
+<meta property="og:site_name" content="iOS学习之旅">
+<meta property="og:description" content="最近搞了一下物理仿真行为，demo效果如下，一共分为3部分一、拖拽上面的灰色view产生新的view二、下面的view之间的相互碰撞三、双击时以小方块的形式向外面散去">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/128249-6821369138266175.gif?imageMogr2/auto-orient/strip">
+<meta property="og:updated_time" content="2016-08-28T16:54:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="swift物理仿真">
+<meta name="twitter:description" content="最近搞了一下物理仿真行为，demo效果如下，一共分为3部分一、拖拽上面的灰色view产生新的view二、下面的view之间的相互碰撞三、双击时以小方块的形式向外面散去">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/128249-6821369138266175.gif?imageMogr2/auto-orient/strip">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"remove"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title>
+  
+
+  
+    swift物理仿真 | iOS学习之旅
+  
+</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left  ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">iOS学习之旅</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+    
+      <h3 id="最近搞了一下物理仿真行为，demo效果如下，一共分为3部分"><a href="#最近搞了一下物理仿真行为，demo效果如下，一共分为3部分" class="headerlink" title="最近搞了一下物理仿真行为，demo效果如下，一共分为3部分"></a>最近搞了一下物理仿真行为，demo效果如下，一共分为3部分</h3><h3 id="一、拖拽上面的灰色view产生新的view"><a href="#一、拖拽上面的灰色view产生新的view" class="headerlink" title="一、拖拽上面的灰色view产生新的view"></a>一、拖拽上面的灰色view产生新的view</h3><h3 id="二、下面的view之间的相互碰撞"><a href="#二、下面的view之间的相互碰撞" class="headerlink" title="二、下面的view之间的相互碰撞"></a>二、下面的view之间的相互碰撞</h3><h3 id="三、双击时以小方块的形式向外面散去"><a href="#三、双击时以小方块的形式向外面散去" class="headerlink" title="三、双击时以小方块的形式向外面散去"></a>三、双击时以小方块的形式向外面散去</h3><a id="more"></a>
+<p><img src="http://upload-images.jianshu.io/upload_images/128249-6821369138266175.gif?imageMogr2/auto-orient/strip" alt="效果图"></p>
+<p>说一下我的实现思路：</p>
+<h3 id="一、给上面的黑色view添加拖拽手势，并在拖拽手势的方法里添加UISnapBehavior捕捉行为，在拖动的过程中不断改变捕捉点即snapPoint。核心代码如下"><a href="#一、给上面的黑色view添加拖拽手势，并在拖拽手势的方法里添加UISnapBehavior捕捉行为，在拖动的过程中不断改变捕捉点即snapPoint。核心代码如下" class="headerlink" title="一、给上面的黑色view添加拖拽手势，并在拖拽手势的方法里添加UISnapBehavior捕捉行为，在拖动的过程中不断改变捕捉点即snapPoint。核心代码如下"></a>一、给上面的黑色view添加拖拽手势，并在拖拽手势的方法里添加UISnapBehavior捕捉行为，在拖动的过程中不断改变捕捉点即snapPoint。核心代码如下</h3><h3 id="二：双击时向四周分散的销毁的过程，首先把view分成好多个小view，然后给每个小view添加UIPushBehavior推动行为，"><a href="#二：双击时向四周分散的销毁的过程，首先把view分成好多个小view，然后给每个小view添加UIPushBehavior推动行为，" class="headerlink" title="二：双击时向四周分散的销毁的过程，首先把view分成好多个小view，然后给每个小view添加UIPushBehavior推动行为，"></a>二：双击时向四周分散的销毁的过程，首先把view分成好多个小view，然后给每个小view添加UIPushBehavior推动行为，</h3><h3 id="三：下面可以相互碰撞的view，给他们添加了重力，碰撞和捕捉行为，并且他们都有Pan手势，在移动的过程中改变捕捉点，感兴趣的同学可以参考demo"><a href="#三：下面可以相互碰撞的view，给他们添加了重力，碰撞和捕捉行为，并且他们都有Pan手势，在移动的过程中改变捕捉点，感兴趣的同学可以参考demo" class="headerlink" title="三：下面可以相互碰撞的view，给他们添加了重力，碰撞和捕捉行为，并且他们都有Pan手势，在移动的过程中改变捕捉点，感兴趣的同学可以参考demo"></a>三：下面可以相互碰撞的view，给他们添加了重力，碰撞和捕捉行为，并且他们都有Pan手势，在移动的过程中改变捕捉点，感兴趣的同学可以参考<a href="https://github.com/lkkwxy/swift-" target="_blank" rel="external">demo</a></h3>
+    
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+
+</body>
+</html>

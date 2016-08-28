@@ -1,0 +1,386 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="UIButton," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="相信做过iOS开发的人，对UIButton都不会陌生，只要用过UIButton，对这个方法都不会陌生- (void)addTarget:(nullable id)target action:(SEL)action forControlEvents:(UIControlEvents)controlEvents;但是这个方法究竟做了什么呢？在开始本篇文章之前，有这样几个疑问?">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对UIButton的addTarget方法探究">
+<meta property="og:url" content="http://yoursite.com/2016/08/14/对UIButton的addTarget方法探究/index.html">
+<meta property="og:site_name" content="iOS学习之旅">
+<meta property="og:description" content="相信做过iOS开发的人，对UIButton都不会陌生，只要用过UIButton，对这个方法都不会陌生- (void)addTarget:(nullable id)target action:(SEL)action forControlEvents:(UIControlEvents)controlEvents;但是这个方法究竟做了什么呢？在开始本篇文章之前，有这样几个疑问?">
+<meta property="og:updated_time" content="2016-08-28T16:19:05.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="对UIButton的addTarget方法探究">
+<meta name="twitter:description" content="相信做过iOS开发的人，对UIButton都不会陌生，只要用过UIButton，对这个方法都不会陌生- (void)addTarget:(nullable id)target action:(SEL)action forControlEvents:(UIControlEvents)controlEvents;但是这个方法究竟做了什么呢？在开始本篇文章之前，有这样几个疑问?">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"remove"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title>
+  
+
+  
+    对UIButton的addTarget方法探究 | iOS学习之旅
+  
+</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left  ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">iOS学习之旅</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+    
+      <p>   相信做过iOS开发的人，对UIButton都不会陌生，只要用过UIButton，对这个方法都不会陌生<code>- (void)addTarget:(nullable id)target action:(SEL)action forControlEvents:(UIControlEvents)controlEvents;</code>但是这个方法究竟做了什么呢？<br><br>在开始本篇文章之前，有这样几个疑问?<a id="more"></a></p>
+<ol>
+<li>当我们点击按钮的时候，到响应事件这中间是怎么的一个过程？</li>
+<li>UIButton是否会持有target？</li>
+<li>target是否可以为nil，若可以为nil，系统是怎么处理的？</li>
+<li>action是否可以nil？</li>
+</ol>
+<p>###当我们点击按钮的时候，到响应事件这中间是怎么的一个过程？<br>   既然我们点击的时候，它能够调用我们的方法，我猜想它应该把target，action，event这些东西存储起来，以便我们点击的时候调用。于是我遍历了UIButton及它父类UIControl的实例变量及属性。在UIControl中发现了这个实例变量<code>targetActions</code>他的类型是<code>NSMutableArray</code>,<code>targetActions</code>里面放的是<code>UIControlTargetAction</code>.这个类是一个model类，只有简单的四个属性<code>_target</code>类型id，<code>_action</code>类型SEL，<code>_eventMask</code>类型unsigned long long，<code>_cancelled</code>类型bool。很明显_target,_action,_eventMask就是我们传过去的，target，action,controlEventt.</p>
+<p>   这样我们应该就能猜测到。他的实现了，当我们调用<code>- (void)addTarget:(nullable id)target action:(SEL)action forControlEvents:(UIControlEvents)controlEvents;</code>,UIButton会根据我们传过去的信息来生成一个<code>UIControlTargetAction</code>对象，并把这个对象放到数组中去，当我们触摸到按钮的时候，根据event去遍历这个数组，如果event跟数组里model的eventMask相同，则<code>[UIControlTargetAction.target performSelector:UIControlTargetAction.action withObject:self]</code>当然了，这里少不了一系列的判断。<br></p>
+<p>###UIButton是否会持有target？<br>   根据文档所说，button不会持有target，所说文档不会骗我们，但是我还是测试了一下,测试代码如下</p>
+<pre><code>Person *person = [[Person alloc]init];
+[btn addTarget:person action:@selector(btnAction) forControlEvents:UIControlEventTouchUpInside];
+//Person类实现如下
+#import &quot;Person.h&quot;
+@implementation Person
+- (void)btnAction{
+    NSLog(@&quot;btnAction&quot;);
+}
+- (void)dealloc{
+ NSLog(@&quot;%@----dealloc&quot;,[self class]);
+}
+@end
+2016-08-13 20:12:14.535 demo[7379:44 0561] Person----dealloc
+</code></pre><p>如果<code>btn</code>持有<code>target</code>的话<code>person</code>,就不会走<code>person</code>的<code>dealloc</code>方法</p>
+<p>###如果有相同event添加了多次会怎样<br>    [btn addTarget:self action:@selector(firstAction) forControlEvents:UIControlEventTouchUpInside];<br>    [btn addTarget:self action:@selector(secondAction) forControlEvents:UIControlEventTouchUpInside];</p>
+<p>我为btn的TouchUpInside事件添加了2个分别不同的action，他会按照添加action的顺序依次调用。上面的代码，当我点击btn的时候，他会先调用firstAction，再调用secondAction.由于它是找到一个调用一个，若你在firstAction方法里把secondAction对应的UIControlTargetAction对象的_eventMask的值改了，则会导致secondAction调用不了。</p>
+<p>###target是否可以为nil<br>    答案是肯定的，可以为nil，若果target为nil并不是向nil发一个消息，而是根据响应者链往上找，若找到，则调用，否则什么也不做。</p>
+<pre><code>[btn addTarget:nil action:@selector(btnAction) forControlEvents:UIControlEventTouchUpInside];
+</code></pre><p>也就是说，上面的这个代码，他会先检查btn这个类有没有实现btnAction方法，若实现就调用，否则找btn.nextResponder，再次检查是否实现，一直到AppDelegate，如果他还没实现，则就什么也不做。</p>
+<h3 id="action是否可以为NULL"><a href="#action是否可以为NULL" class="headerlink" title="action是否可以为NULL"></a>action是否可以为NULL</h3><p>   文档上说action 不能为NULL，但是我测试发现action为NULL的时候，程序在运行的时候并不会报错。不知道是Apple添加了判断而没有更新文档，还是我的测试方法有问题，测试的代码如下</p>
+<pre><code>SEL btnAction = NULL;
+[btn addTarget:self action:btnAction forControlEvents:UIControlEventTouchUpInside];
+</code></pre><p>当我点击btn的时候什么反应也没有。这个不知道为啥会有文档上的描述不一致。</p>
+
+    
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+  
+
+  
+
+  
+
+</body>
+</html>
