@@ -91,7 +91,7 @@
 <meta property="og:site_name" content="iOS学习之旅">
 <meta property="og:description" content="很多时候我们需要把从服务器端请求下来的数据转成model类，今天就介绍一下如何利用runtime实现字典转模型">
 <meta property="og:image" content="http://ww3.sinaimg.cn/large/00690n3njw1evo8srppmqj315u0cu0xf.jpg">
-<meta property="og:updated_time" content="2016-08-29T03:18:22.000Z">
+<meta property="og:updated_time" content="2016-08-29T03:22:29.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="swift之用runtime实现字典转模型">
 <meta name="twitter:description" content="很多时候我们需要把从服务器端请求下来的数据转成model类，今天就介绍一下如何利用runtime实现字典转模型">
@@ -227,10 +227,7 @@
     var age:NSNumber?
 }</pre>  
 
-<h3 id="2、为NSObject创建一个extension，在其中实现字典转模型"><a href="#2、为NSObject创建一个extension，在其中实现字典转模型" class="headerlink" title="2、为NSObject创建一个extension，在其中实现字典转模型"></a>2、为NSObject创建一个extension，在其中实现字典转模型</h3><p>主要分为一下几步</p>
-<p>####（1）获取所有的属性的名字</p>
-<p>####（2）通过属性的名字去字典里取值</p>
-<p>####（3）用KVC为model类赋值</p>
+<h3 id="2、为NSObject创建一个extension，在其中实现字典转模型"><a href="#2、为NSObject创建一个extension，在其中实现字典转模型" class="headerlink" title="2、为NSObject创建一个extension，在其中实现字典转模型"></a>2、为NSObject创建一个extension，在其中实现字典转模型</h3><p>主要分为一下几步<br>（1）获取所有的属性的名字<br>（2）通过属性的名字去字典里取值<br>（3）用KVC为model类赋值</p>
 <pre>
 extension NSObject{
     class func objectWithKeyValues(keyValues:NSDictionary) -> AnyObject{
