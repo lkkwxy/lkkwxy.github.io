@@ -92,7 +92,7 @@
 <meta property="og:site_name" content="iOS学习之旅">
 <meta property="og:description" content="我们都知道在swift中很容易就能为一个类添加一个类属性,就像这样public static var name:String?,可在OC中我们应该怎么为一个类添加类属性呢？我们可以在属性的描述词里添加一个class的描述，如下所示
 @interface SPCustomType : NSObject//在这添加了一个class，代表着这是一个类属性@property (nonatomic,copy">
-<meta property="og:updated_time" content="2016-08-28T17:32:03.000Z">
+<meta property="og:updated_time" content="2016-08-29T03:03:59.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何为Objective-C添加类属性">
 <meta name="twitter:description" content="我们都知道在swift中很容易就能为一个类添加一个类属性,就像这样public static var name:String?,可在OC中我们应该怎么为一个类添加类属性呢？我们可以在属性的描述词里添加一个class的描述，如下所示
@@ -118,7 +118,7 @@
   
 
   
-    标签 | iOS学习之旅
+    如何为Objective-C添加类属性 | iOS学习之旅
   
 </title>
 </head>
@@ -222,14 +222,10 @@
   <div id="posts" class="posts-expand">
     
     
-      <div class="tag-cloud">
-        <div class="tag-cloud-title">
-            目前共计 7 个标签
-        </div>
-        <div class="tag-cloud-tags">
-          <a href="/tags/Class-property/" style="font-size: 12px; color: #ccc">Class property</a> <a href="/tags/Objective-C/" style="font-size: 12px; color: #ccc">Objective-C</a> <a href="/tags/UIButton/" style="font-size: 12px; color: #ccc">UIButton</a> <a href="/tags/WKWebview/" style="font-size: 12px; color: #ccc">WKWebview</a> <a href="/tags/runtime/" style="font-size: 12px; color: #ccc">runtime</a> <a href="/tags/swift/" style="font-size: 12px; color: #ccc">swift</a> <a href="/tags/物理仿真/" style="font-size: 12px; color: #ccc">物理仿真</a>
-        </div>
-      </div>
+      <p>我们都知道在swift中很容易就能为一个类添加一个类属性,就像这样<code>public static var name:String?</code>,可在OC中我们应该怎么为一个类添加类属性呢？<br>我们可以在属性的描述词里添加一个class的描述，如下所示</p>
+<p><pre><br>@interface SPCustomType : NSObject<br>//在这添加了一个class，代表着这是一个类属性<br>@property (nonatomic,copy,class)NSString <em>name;<br>@property (nonatomic,assign,class)NSInteger count;<br>@end</em></pre><a id="more"></a>但是值得注意的是，Xcode并不会为我们自动生成一个对应的类变量，也就是说<code>@property (nonatomic,copy,class)NSString name;</code>相当于写成这样<code>+ (NSString <em>)name;+ (void)setName:(NSString </em>)name;</code>，有一个+号的getter和一个+号setter方法，所以我们需要去实现这2个类方法。<br><pre>@implementation SPCustomType<br>static NSString <em>_name;<br>static NSInteger _count;<br><code>+</code> (NSString </em>)name{<br>    return _name;<br>}<br><code>+</code> (void)setName:(NSString *)name{<br>    _name = name;<br>}<br><code>+</code> (NSInteger)count{<br>    return _count;<br>}<br><code>+</code> (void)setCount:(NSInteger)count{<br>    _count = count;<br>}<br>@end</pre>接下来我们就可以用类属性了。例如<pre>SPCustomType.count++;<br>NSLog(@”%ld”,(long)SPCustomType.count);//打印结果是1<br>SPCustomType.name = @”testName”;<br>NSLog(@”%@”,SPCustomType.name);//打印结果是testName</pre>有的人会有疑问，既然加上<code>class</code>这个描述词之后，仅仅相当于生成了+号getter和setter方法的声明，那为什么我们能通过点语法进行调用呢？<br>其实点语法并不是去访问成员变量，而是方法的调用。<code>ClassA.test</code>相当于<code>[ClassA test]</code>，<code>ClassA.test=@”test”</code>相当于<code>[ClassA setTest:”test”]</code>ClassA既可以是一个对象也可以是一个类.简单测试如下</p>
+<p><pre><br>//声明<br>@interface SPDotTestClass : NSObject<br><code>+</code> (void)sayHello;<br><code>+</code> (void)setName:(NSString <em>)name;<br>@end<br>//实现<br>@implementation SPDotTestClass<br><code>+</code> (void)sayHello{<br>    NSLog(@”sayHello”);<br>}<br><code>+</code> (void)setName:(NSString </em>)name{<br>    NSLog(@”hello %@”,name);<br>}<br>@end<br>//测试代码<br>SPDotTestClass.sayHello;//此处打印sayHello<br>SPDotTestClass.name = @”lkk”;//此处打印hello lkk<br></pre>还有更简单的证明，就是我们经常用的<code>[UIApplication sharedApplication];</code>也可以写成<code>IApplication.sharedApplication;</code>当然不建议这么去写。<br>在回到上面为OC添加类属性上，并不是真正的为一个类添加了类属性，只是看起来好像有了个类属性。</p>
+
     
   </div>
 

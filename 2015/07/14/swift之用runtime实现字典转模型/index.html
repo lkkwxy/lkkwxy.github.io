@@ -91,7 +91,7 @@
 <meta property="og:site_name" content="iOS学习之旅">
 <meta property="og:description" content="很多时候我们需要把从服务器端请求下来的数据转成model类，今天就介绍一下如何利用runtime实现字典转模型">
 <meta property="og:image" content="http://ww3.sinaimg.cn/large/00690n3njw1evo8srppmqj315u0cu0xf.jpg">
-<meta property="og:updated_time" content="2016-08-28T17:32:30.000Z">
+<meta property="og:updated_time" content="2016-08-29T03:18:22.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="swift之用runtime实现字典转模型">
 <meta name="twitter:description" content="很多时候我们需要把从服务器端请求下来的数据转成model类，今天就介绍一下如何利用runtime实现字典转模型">
@@ -117,7 +117,7 @@
   
 
   
-    标签 | iOS学习之旅
+    swift之用runtime实现字典转模型 | iOS学习之旅
   
 </title>
 </head>
@@ -221,14 +221,113 @@
   <div id="posts" class="posts-expand">
     
     
-      <div class="tag-cloud">
-        <div class="tag-cloud-title">
-            目前共计 7 个标签
-        </div>
-        <div class="tag-cloud-tags">
-          <a href="/tags/Class-property/" style="font-size: 12px; color: #ccc">Class property</a> <a href="/tags/Objective-C/" style="font-size: 12px; color: #ccc">Objective-C</a> <a href="/tags/UIButton/" style="font-size: 12px; color: #ccc">UIButton</a> <a href="/tags/WKWebview/" style="font-size: 12px; color: #ccc">WKWebview</a> <a href="/tags/runtime/" style="font-size: 12px; color: #ccc">runtime</a> <a href="/tags/swift/" style="font-size: 12px; color: #ccc">swift</a> <a href="/tags/物理仿真/" style="font-size: 12px; color: #ccc">物理仿真</a>
-        </div>
-      </div>
+      <p>很多时候我们需要把从服务器端请求下来的数据转成model类，今天就介绍一下如何利用runtime实现字典转模型<br><a id="more"></a></p>
+<h3 id="1、首先先建一个model类"><a href="#1、首先先建一个model类" class="headerlink" title="1、首先先建一个model类"></a>1、首先先建一个model类</h3><pre>class Person:NSObject { 
+    var name:String?
+    var age:NSNumber?
+}</pre>  
+
+<h3 id="2、为NSObject创建一个extension，在其中实现字典转模型"><a href="#2、为NSObject创建一个extension，在其中实现字典转模型" class="headerlink" title="2、为NSObject创建一个extension，在其中实现字典转模型"></a>2、为NSObject创建一个extension，在其中实现字典转模型</h3><p>主要分为一下几步</p>
+<p>####（1）获取所有的属性的名字</p>
+<p>####（2）通过属性的名字去字典里取值</p>
+<p>####（3）用KVC为model类赋值</p>
+<pre>
+extension NSObject{
+    class func objectWithKeyValues(keyValues:NSDictionary) -> AnyObject{
+        let model = self.init()
+        //存放属性的个数
+        var outCount:UInt32 = 0
+        //获取所有的属性
+        let properties = class_copyPropertyList(self.classForCoder(), &outCount)
+        //遍历属性
+        for var i = 0;i < Int(outCount);i++ {
+            //获取第i个属性
+            let property = properties[i]
+            //得到属性的名字
+            let key = NSString(CString: property_getName(property), encoding: NSUTF8StringEncoding)!
+            if let value = keyValues[key]{
+                //为model类赋值
+                model.setValue(value, forKey: key as String)
+            }
+        }
+        return model
+    }
+}</pre>  
+
+<h3 id="3、测试结果"><a href="#3、测试结果" class="headerlink" title="3、测试结果"></a>3、测试结果</h3><p><img src="http://ww3.sinaimg.cn/large/00690n3njw1evo8srppmqj315u0cu0xf.jpg" alt="测试结果"><br>但是有时候我们经常会遇到这样的情况model类继承自父类，比如</p>
+<pre><code>class Person:NSObject {
+    var name:String?
+    var age:NSNumber?
+}
+class Student:Person{
+    var number:String?
+    var score:NSNumber?
+}</code></pre>
+
+<p>Student类继承自Person类我们也要为Student类中父类的属性赋值,也就是说我们在遍历属性的同时也要为父类的属性<br></p>
+<h3 id="4、遍历父类中得属性"><a href="#4、遍历父类中得属性" class="headerlink" title="4、遍历父类中得属性"></a>4、遍历父类中得属性</h3><p>在这种情况下我改变了一下思路，在获取属性的同时不在用KVC直接赋值，而是把获取的属性存起来，得到所有的属性之后在进行赋值<br>把扩展中得代码改造之后如下</p>
+<pre>
+extension NSObject{
+    class func objectWithKeyValues(keyValues:NSDictionary) -> AnyObject{
+        let model = self.init()
+        //获取所有的属性
+        let properties = self.allProperties()
+        if let _ = properties{
+            for property in properties!{
+                if let value = keyValues[property.propertyNmae]{
+                    //为model类赋值
+                    model.setValue(value, forKey: property.propertyNmae as String)
+                }
+            }
+        }
+        return model
+    }
+    class func allProperties() -> [LKKProperty]?{
+        let className = NSString(CString: class_getName(self), encoding: NSUTF8StringEncoding)
+            if let _ = NSString(CString: class_getName(self), encoding: NSUTF8StringEncoding){
+                //不用为NSObject的属性赋值
+                if className!.isEqualToString("NSObject"){
+                    return nil
+                }
+            }else{
+                return nil
+            }
+            var outCount:UInt32 = 0
+            //所有属性LKKProperty里面放着存放这个属性
+            var propertiesArray = [LKKProperty]()
+            let properties = class_copyPropertyList(self.classForCoder(),&outCount)
+            //获取父类的所有属性
+            let superM = self.superclass()?.allProperties()
+            if let _ = superM{
+                //把父类中得所有属性添加进去
+                propertiesArray += superM!
+            }
+            //遍历自己的属性添加进去
+            for var i = 0;i < Int(outCount);i++ {
+                let property = LKKProperty(property: properties[i])
+                propertiesArray.append(property)
+            }
+            return propertiesArray
+        }
+}
+class LKKProperty{
+        var propertyNmae:NSString!
+        var property:objc_property_t
+        init(property:objc_property_t){
+            self.property = property
+            self.propertyNmae = NSString(CString: property_getName(property), encoding: NSUTF8StringEncoding)
+        }
+}</pre>  
+
+<h3 id="5、我们还经常遇到这种情况，类型嵌套，比如Person类里面还有一个Card类代表着我们的身份信息，我们在赋值的时候也想直接把Card的所有属性都能直接弄好，也就是说我们在遍历属性"><a href="#5、我们还经常遇到这种情况，类型嵌套，比如Person类里面还有一个Card类代表着我们的身份信息，我们在赋值的时候也想直接把Card的所有属性都能直接弄好，也就是说我们在遍历属性" class="headerlink" title="5、我们还经常遇到这种情况，类型嵌套，比如Person类里面还有一个Card类代表着我们的身份信息，我们在赋值的时候也想直接把Card的所有属性都能直接弄好，也就是说我们在遍历属性"></a>5、我们还经常遇到这种情况，类型嵌套，比如Person类里面还有一个Card类代表着我们的身份信息，我们在赋值的时候也想直接把Card的所有属性都能直接弄好，也就是说我们在遍历属性</h3><p>思路如下，在获取属性的过程中判断是否属于Foundtation框架，如果是直接赋值，如果不是就获取这个类的所有属性，对这个类的属性进行赋值，然后把Card这个类的对象赋值给Person这个类的对象，修改代码如下。</p>
+<p><pre><br>class LKKProperty{<br>    //属性名字<br>    var propertyNmae:NSString!<br>    //属性<br>    var property:objc_property_t<br>    //属性类型<br>    var propertyType:LKKType!<br>    init(property:objc_property_t){<br>        self.property = property<br>        self.propertyNmae = NSString(CString: property_getName(property), encoding: NSUTF8StringEncoding)<br>        //自定义的类的描述格式为T@”_TtC15字典转模型4Card”,N,&amp;,Vcard<br>        //T+@+”+..+工程的名字+数字+类名+”+,+其他,而我们想要的只是类名，所以要修改这个字符串<br>      //获取类的描述<br>        var code: NSString = NSString(CString: property_getAttributes(property), encoding: NSUTF8StringEncoding)!<br>        //直接取出””中间的内容<br>        code = code.componentsSeparatedByString(“\””)[1]<br>        let bundlePath = getBundleName()<br>        let range = code.rangeOfString(bundlePath)<br>        if range.length &gt; 0{<br>            //去掉工程名字之前的内容<br>            code = code.substringFromIndex(range.length + range.location)<br>        }<br>        //在去掉剩下的数字<br>        var number:String = “”<br>        for char in (code as String).characters{<br>            if char &lt;= “9” &amp;&amp; char &gt;= “0”{<br>                number += String(char)<br>            }else{<br>                break<br>            }<br>        }<br>        let numberRange = code.rangeOfString(number)<br>        if numberRange.length &gt; 0{<br>            //获取类名<br>            code = code.substringFromIndex(numberRange.length + numberRange.location)<br>        }<br>        //得到类的Type<br>        self.propertyType = LKKType(code: code)<br>    }<br>}<br>class LKKType {<br>    //类名<br>    var code:NSString<br>    //class<br>    var typeClass:AnyClass?<br>    //是否属于Foundtation<br>    var isFromFoundtion:Bool = true<br>    init(code:NSString){<br>        self.code = code<br>        //判断是否属于Foundtation框架<br>        if self.code.hasPrefix(“NS”){<br>            self.typeClass = NSClassFromString(self.code as String)<br>            self.isFromFoundtion = true<br>        }else{<br>            //如果是自定义的类NSClassFromString这个方法传得字符串是工程的名字+类名<br>            self.typeClass = getClassWitnClassNmae(self.code as String)<br>            self.isFromFoundtion = false<br>        }<br>    }<br>}<br>//获取工程的名字<br>func getBundleName() -&gt; String{<br>    var bundlePath = NSBundle.mainBundle().bundlePath<br>    bundlePath = bundlePath.componentsSeparatedByString(“/“).last!<br>    bundlePath = bundlePath.componentsSeparatedByString(“.”).first!<br>    return bundlePath<br>}<br>//通过类名返回一个AnyClass<br>func getClassWitnClassNmae(name:String) -&gt;AnyClass?{<br>    let type = getBundleName() + “.” + name<br>    return NSClassFromString(type)<br>}</pre>  </p>
+<h3 id="6、未完成的事情"><a href="#6、未完成的事情" class="headerlink" title="6、未完成的事情"></a>6、未完成的事情</h3><p>####（1）当类的属性与字典里的key值不一定的时候，出现的情况：字典里面的key是关键字的时候</p>
+<p>####（2）当类的属性是数组，并且数组里面要放自定义类的时候<br>接着完成未完成的事情，首先当字典里的key值与属性不一致的时候，我弄了个映射</p>
+<h4 id="一、解决类的属性与字典里的key值不一定的情况"><a href="#一、解决类的属性与字典里的key值不一定的情况" class="headerlink" title="一、解决类的属性与字典里的key值不一定的情况"></a>一、解决类的属性与字典里的key值不一定的情况</h4><p><pre>//如果需要映射关系，就让子类复写此方法，获取映射到得值<br>//并且在LKKProperty这个类中添加key属性，用来取的字典Key<br>  func replacedKeyFromPropertyName() -&gt; NSDictionary{<br>        return [“属性名字”:”key名字”]<br>    }</pre></p>
+<h4 id="二、首先我们添加一个方法，这个方法的作用是把字典数组转成模型数组。代码如下"><a href="#二、首先我们添加一个方法，这个方法的作用是把字典数组转成模型数组。代码如下" class="headerlink" title="二、首先我们添加一个方法，这个方法的作用是把字典数组转成模型数组。代码如下"></a>二、首先我们添加一个方法，这个方法的作用是把字典数组转成模型数组。代码如下</h4><p><pre>    //把一个字典数组转成一个模型数组<br>    class func objectArrayWithKeyValuesArray(array:NSArray) -&gt; [AnyObject]{<br>        var temp = Array<anyobject>()<br>        let properties = self.allProperties()<br>        for(var i = 0;i &lt; array.count;i++){<br>            let keyValues = array[i] as? NSDictionary<br>            if (keyValues != nil){<br>                let model = self.init()<br>                //为每个model赋值<br>                model.setValuesForProperties(properties, keyValues: keyValues!)<br>                temp.append(model)<br>            }<br>        }<br>        return temp<br>    }</anyobject></pre><br>三，当判断类的属性是数组的时候，通过这个方法拿到数组里面的类型</p>
+<p><pre><br>    //子类重写这个方法，说明数组里存放的对象类型<br>    func objectClassInArray() -&gt; [String:String]{<br>        return [“属性名”:”自定义类名”]<br>    }</pre><br>四、在赋值时若发现是数组并且是数组里装的是自定义类的时候，用二的方法得到数组对象，并且赋值</p>
+<p><pre><br>    //把一个字典里的值赋给一个对象的值<br>    func setValuesForProperties(properties:[LKKProperty]?,keyValues:NSDictionary){<br>        //判断属性数组是否存在<br>        if let _ = properties{<br>            for property in properties!{<br>                //判断该属性是否属于Foundtation框架<br>                if property.propertyType.isFromFoundtion {<br>                    if let value = keyValues[property.key]{<br>                        //判断是否是数组，若是数组，判断数组里装的类是否是自定义类<br>                        if property.propertyType.isArray &amp;&amp; property.propertyType.arrayClass != nil &amp;&amp; value is NSArray{<br>                            //把字典数组转换成模型数组<br>                            let temp = property.propertyType.arrayClass!.objectArrayWithKeyValuesArray(value as! NSArray)<br>                            //为model类赋值<br>                            self.setValue(temp, forKey: property.propertyNmae as String)<br>                        }else{<br>                            //为model类赋值<br>                            self.setValue(value, forKey: property.propertyNmae as String)<br>                        }<br>                    }<br>                }else{<br>                    if let value = keyValues[property.key]{<br>                        if value is NSDictionary{<br>                            let subClass = property.propertyType.typeClass?.objectWithKeyValues(value as! NSDictionary)<br>                            //为model类赋值<br>                            self.setValue(subClass, forKey: property.propertyNmae as String)<br>                        }<br>                    }<br>                }<br>            }<br>        }<br>    }</pre><br>这些内容下篇文章见，<a href="https://github.com/lkkwxy/LKKExtension" target="_blank" rel="external">demo下载地址</a></p>
+
     
   </div>
 
