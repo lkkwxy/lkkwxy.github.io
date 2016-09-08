@@ -85,22 +85,19 @@
 
 
 <meta name="description" content="在项目中我们有时会遇到让我们改变placeholder的颜色，简单介绍一下改变placeholder的颜色的几种方法
-####1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性
-let placeHolderTextAttr = NSMutableAttributedString(string: &quot;请输入您">
+1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性">
 <meta property="og:type" content="article">
 <meta property="og:title" content="如何改变UITextField的placeholder的颜色">
 <meta property="og:url" content="http://yoursite.com/2016/09/09/如何改变UITextField的placeholder的颜色/index.html">
 <meta property="og:site_name" content="iOS学习之旅">
 <meta property="og:description" content="在项目中我们有时会遇到让我们改变placeholder的颜色，简单介绍一下改变placeholder的颜色的几种方法
-####1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性
-let placeHolderTextAttr = NSMutableAttributedString(string: &quot;请输入您">
+1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性">
 <meta property="og:image" content="http://upload-images.jianshu.io/upload_images/128249-ed5f8c4f58bb0879.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
-<meta property="og:updated_time" content="2016-09-08T23:50:21.000Z">
+<meta property="og:updated_time" content="2016-09-08T23:54:17.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何改变UITextField的placeholder的颜色">
 <meta name="twitter:description" content="在项目中我们有时会遇到让我们改变placeholder的颜色，简单介绍一下改变placeholder的颜色的几种方法
-####1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性
-let placeHolderTextAttr = NSMutableAttributedString(string: &quot;请输入您">
+1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性">
 <meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/128249-ed5f8c4f58bb0879.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 
 
@@ -228,15 +225,13 @@ let placeHolderTextAttr = NSMutableAttributedString(string: &quot;请输入您">
     
     
       <p>在项目中我们有时会遇到让我们改变placeholder的颜色，简单介绍一下改变placeholder的颜色的几种方法</p>
-<p>####1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性</p>
-<pre>let placeHolderTextAttr = NSMutableAttributedString(string: "请输入您的名字");
+<h4 id="1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性"><a href="#1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性" class="headerlink" title="1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性"></a>1、利用属性字符串，UITextField有这样一个属性attributedPlaceholder，可以让我们定制placeholder的属性<a id="more"></a></h4><pre>let placeHolderTextAttr = NSMutableAttributedString(string: "请输入您的名字");
 placeHolderTextAttr.addAttributes([NSForegroundColorAttributeName:UIColor.redColor()], range: NSMakeRange(0, placeHolderTextAttr.length))
 self.textField.attributedPlaceholder = placeHolderTextAttr;
 </pre>
 
-<p>####2、如果用xib或SB的话，可以在xib中设置user Defined Runtime Attributes<br>keyPath设置成_placeholderLabel.textColor type设置成Color，需要注意的是，设置之前一定要先选中textField<br><img src="http://upload-images.jianshu.io/upload_images/128249-ed5f8c4f58bb0879.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="屏幕快照 2016-09-09 07.35.37.png"></p>
-<p>####3、用extension和KVC去做,由于以上2种写法只针对某一个textField，如果有多个textField需要设置的话，显得比较麻烦，用extension的话就简单多了</p>
-<pre>
+<h4 id="2、如果用xib或SB的话，可以在xib中设置user-Defined-Runtime-Attributes"><a href="#2、如果用xib或SB的话，可以在xib中设置user-Defined-Runtime-Attributes" class="headerlink" title="2、如果用xib或SB的话，可以在xib中设置user Defined Runtime Attributes"></a>2、如果用xib或SB的话，可以在xib中设置user Defined Runtime Attributes</h4><p>keyPath设置成_placeholderLabel.textColor type设置成Color，需要注意的是，设置之前一定要先选中textField<br><img src="http://upload-images.jianshu.io/upload_images/128249-ed5f8c4f58bb0879.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="屏幕快照 2016-09-09 07.35.37.png"></p>
+<h4 id="3、用extension和KVC去做-由于以上2种写法只针对某一个textField，如果有多个textField需要设置的话，显得比较麻烦，用extension的话就简单多了"><a href="#3、用extension和KVC去做-由于以上2种写法只针对某一个textField，如果有多个textField需要设置的话，显得比较麻烦，用extension的话就简单多了" class="headerlink" title="3、用extension和KVC去做,由于以上2种写法只针对某一个textField，如果有多个textField需要设置的话，显得比较麻烦，用extension的话就简单多了"></a>3、用extension和KVC去做,由于以上2种写法只针对某一个textField，如果有多个textField需要设置的话，显得比较麻烦，用extension的话就简单多了</h4><pre>
 extension UITextField{
     @IBInspectable var placeHolderColor: UIColor? {
         get {
@@ -249,8 +244,8 @@ extension UITextField{
         }
     }
 }</pre>
-####4、在OC中extension是不能添加实现的这时我们可以用分类去实现这个功能
-<pre>
+
+<h4 id="4、在OC中extension是不能添加实现的-这时我们可以用分类去实现这个功能"><a href="#4、在OC中extension是不能添加实现的-这时我们可以用分类去实现这个功能" class="headerlink" title="4、在OC中extension是不能添加实现的,这时我们可以用分类去实现这个功能"></a>4、在OC中extension是不能添加实现的,这时我们可以用分类去实现这个功能</h4><pre>
 @interface UITextField (SCPlaceHolder)
 @property (nonatomic,strong)IBInspectable UIColor *sc_placeHolderColor;
 @end
