@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta name="keywords" content="Swift,Kingfisher">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kingfisher源码解析之ImageCache">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;04&#x2F;Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache&#x2F;index.html">
+<meta property="og:site_name" content="李坤坤">
+<meta property="og:description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-12-03T16:00:00.000Z">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kingfisher源码解析之ImageCache | 李坤坤</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">李坤坤</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="李坤坤">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="李坤坤">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kingfisher源码解析之ImageCache
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-04 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-04T00:00:00+08:00">2019-12-04</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Swift/" itemprop="url" rel="index">
+                    <span itemprop="name">Swift</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/">Kingfisher 源码解析之使用</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/">Kingfisher 源码解析之 Options 解释</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B/">Kingfisher 源码解析之加载流程</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/">Kingfisher 源码解析之加载动图</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/">Kingfisher 源码解析之 ImageCache</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/">Kingfisher 源码解析之 Processor 和 CacheSerializer</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/06/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImagePrefetcher/">Kingfisher 源码解析之 ImagePrefetcher</a></li>
+</ul>
+<p>Kingfisher 中 ImageCache 里提供内存缓存和磁盘缓存，分别是<code>MemoryStorage.Backend&lt;KFCrossPlatformImage&gt;</code>和<code>DiskStorage.Backend&lt;Data&gt;</code>来实现的，注：内存缓存和磁盘缓存都是通过<code>class Backend</code>,不过这 2 个类，是完全不同的类，使用枚举来充当命名空间来区分的，分别定义在<code>MemoryStorage.swift</code>和<code>DiskStorage.swift</code>中</p>
+<h4 id="内存缓存"><a href="#内存缓存" class="headerlink" title="内存缓存"></a>内存缓存</h4><p>内存缓存一共有三个类构成，<code>Backend</code>提供缓存的功能，<code>Config</code>提供缓存的配置项，<code>StorageObject&lt;T&gt;</code>缓存的封装类型</p>
+<h5 id="Config的主要内容"><a href="#Config的主要内容" class="headerlink" title="Config的主要内容"></a><code>Config</code>的主要内容</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public struct Config &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;内存缓存的最大容量，ImageCache.default中提供的默认值是设备物理内存的四分之一</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    public var totalCostLimit: Int</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;内存缓存的最大长度</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    public var countLimit: Int &#x3D; .max</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;内存缓存的的过期时长</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    public var expiration: StorageExpiration &#x3D; .seconds(300)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;清除过期缓存的时间间隔</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    public let cleanInterval: TimeInterval</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="StorageObject-lt-T-gt-的主要内容"><a href="#StorageObject-lt-T-gt-的主要内容" class="headerlink" title="StorageObject&lt;T&gt;的主要内容"></a><code>StorageObject&lt;T&gt;</code>的主要内容</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">class StorageObject&lt;T&gt; &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;缓存的真正的值</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">      let value: T</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;存活时间，也就是多久之后过期</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">      let expiration: StorageExpiration</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;缓存e的key</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">      let key: String</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;过期时间，默认值是当前时间加上expiration</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">      private(set) var estimatedExpiration: Date</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F; 更新过期时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">      func extendExpiration(_ extendingExpiration: ExpirationExtending &#x3D; .cacheTime) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">          switch extendingExpiration &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">          case .none:&#x2F;&#x2F;不更新过期时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">              return</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">          case .cacheTime:&#x2F;&#x2F;把过期时间设置为当前时间加上存活时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">              self.estimatedExpiration &#x3D; expiration.estimatedExpirationSinceNow</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">          case .expirationTime(let expirationTime):&#x2F;&#x2F;把过期时间设置为指定时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">              self.estimatedExpiration &#x3D; expirationTime.estimatedExpirationSinceNow</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">          &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">      &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F; 是否已经过期</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">      var expired: Bool &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">          &#x2F;&#x2F;estimatedExpiration.isPast 是对Date的一个扩展方法，判断estimatedExpiration是否小于当前时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">24</span></pre></td><td class="code"><pre><span class="line">          return estimatedExpiration.isPast</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">25</span></pre></td><td class="code"><pre><span class="line">      &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">26</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="Backend的主要内容"><a href="#Backend的主要内容" class="headerlink" title="Backend的主要内容"></a><code>Backend</code>的主要内容</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public class Backend&lt;T: CacheCostCalculable&gt; &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;使用NSCache进行缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    let storage &#x3D; NSCache&lt;NSString, StorageObject&lt;T&gt;&gt;()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;存放所有缓存的key，在删除过期缓存是有用</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    var keys &#x3D; Set&lt;String&gt;()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;定时器，用于定时清除过期数据</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    private var cleanTimer: Timer? &#x3D; nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;配置项</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    public var config: Config</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    ...下面还有一些缓存数据，读取数据，删除缓存，是否已缓存，删除过期数据等方法</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<p>由上面我们可以看出，Kingfisher 中内存缓存是用 NSCache 实现的，NSCache 是一个类似于 Dictionary 的类，拥有相似的 API，不过区别于 Dictionary 的是，NSCache 是线程安全的，并且提供了设置最大缓存个数和最大缓存大小的配置，Backend 就是通过设置 NSCache 的<code>countLimit</code>和<code>totalCostLimit</code>来实现最大缓存个数和最大缓存大小。</p>
+<p>通过下面的代码，看下 Backend 是如何缓存数据，读取数据，判断是否已缓存，删除缓存，删除过期数据的？代码中有详细的注释，注：下面的代码删除了一些非核心代码，比如异常，加锁保证线程安全等</p>
+<h5 id="缓存数据"><a href="#缓存数据" class="headerlink" title="缓存数据"></a>缓存数据</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">func store(value: T,forKey key: String,expiration: StorageExpiration? &#x3D; nil) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;获取存活时间，若缓存时没设置，则从配置中获取</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    let expiration &#x3D; expiration ?? config.expiration</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;判断是否过期，若已经过期直接返回</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    guard !expiration.isExpired else &#123; return &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;把要缓存的值封装成StorageObject类型</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    let object &#x3D; StorageObject(value, key: key, expiration: expiration)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;把结果缓存起来</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    storage.setObject(object, forKey: key as NSString, cost: value.cacheCost)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;把key保存起来</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    keys.insert(key)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="读取数据-判断数据是否已缓存"><a href="#读取数据-判断数据是否已缓存" class="headerlink" title="读取数据,判断数据是否已缓存"></a>读取数据,判断数据是否已缓存</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 读取数据</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">func value(forKey key: String, extendingExpiration: ExpirationExtending &#x3D; .cacheTime) -&gt; T? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;从NSCache中获取数据，如获取不到直接返回nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    guard let object &#x3D; storage.object(forKey: key as NSString) else &#123; return nil &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;判断是否过期，若过期直接返回nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    if object.expired &#123; return nil &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;去更新过期时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    object.extendExpiration(extendingExpiration)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    return object.value</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 判断是否缓存，其本质就是去读取数据，只是不更新缓存时间，若取到，则已缓存，否则未缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">func isCached(forKey key: String) -&gt; Bool &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">    guard let _ &#x3D; value(forKey: key, extendingExpiration: .none) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">        return false</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">    return true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="删除缓存"><a href="#删除缓存" class="headerlink" title="删除缓存"></a>删除缓存</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"> func remove(forKey key: String) throws &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    storage.removeObject(forKey: key as NSString)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    keys.remove(key)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="删除过期数据，这里使用-Set-存储-key-的原因是-NSCache，并没有像-Dictionary-一样提供获取-allKeys-或-allValues-的方法"><a href="#删除过期数据，这里使用-Set-存储-key-的原因是-NSCache，并没有像-Dictionary-一样提供获取-allKeys-或-allValues-的方法" class="headerlink" title="删除过期数据，这里使用 Set 存储 key 的原因是 NSCache，并没有像 Dictionary 一样提供获取 allKeys 或 allValues 的方法"></a>删除过期数据，这里使用 Set 存储 key 的原因是 NSCache，并没有像 Dictionary 一样提供获取 allKeys 或 allValues 的方法</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">func removeExpired() &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    for key in keys &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">        let nsKey &#x3D; key as NSString</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">        &#x2F;&#x2F;通过key获取数据，若获取失败，则删除从keys中删除key</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">        guard let object &#x3D; storage.object(forKey: nsKey) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">            keys.remove(key)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">            continue</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">        &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">        &#x2F;&#x2F;判断object是否过期，若过期，则从cache中删除数据，从keys中删除key</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">        if object.estimatedExpiration.isPast &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">            storage.removeObject(forKey: nsKey)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">            keys.remove(key)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">        &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h3 id="磁盘缓存"><a href="#磁盘缓存" class="headerlink" title="磁盘缓存"></a>磁盘缓存</h3><p>Kingfisher 中磁盘缓存是通过文件系统来实现的，也就是说每个缓存的数据都对应一个文件，其中 Kingfisher 把文件的创建时间修改为最后一次读取的时间，把文件的修改时间修改为过期时间。</p>
+<p>磁盘缓存一共有三个类构成，<code>Backend</code>提供缓存的功能，<code>Config</code>提供缓存的配置项，<code>FileMeta</code>存储着文件信息。</p>
+<h5 id="Config的主要内容-1"><a href="#Config的主要内容-1" class="headerlink" title="Config的主要内容"></a><code>Config</code>的主要内容</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public struct Config &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;磁盘缓存占用磁盘的最大值，为0z时，表示不限制</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    public var sizeLimit: UInt</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;存活时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    public var expiration: StorageExpiration &#x3D; .days(7)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;文件的扩展名</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    public var pathExtension: String? &#x3D; nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;是否需要把文件名哈希</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    public var usesHashedFileName &#x3D; true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;操作文件的FileManager</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    let fileManager: FileManager</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;文件缓存所在的文件夹，默认在cache文件夹里</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">    let directory: URL?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="FileMeta的主要内容"><a href="#FileMeta的主要内容" class="headerlink" title="FileMeta的主要内容"></a><code>FileMeta</code>的主要内容</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">struct FileMeta &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;文件路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    let url: URL</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;文件最后一次读取时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;这个在超过sizeLimit大小时，需要删除文件时，用此属性进行排序，把时间较早的删除掉</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    let lastAccessDate: Date?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;过期时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    let estimatedExpirationDate: Date?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;是否是个文件夹</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    let isDirectory: Bool</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;文件大小</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">    let fileSize: Int</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="Backend的主要内容-1"><a href="#Backend的主要内容-1" class="headerlink" title="Backend的主要内容"></a><code>Backend</code>的主要内容</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public class Backend&lt;T: DataTransformable&gt; &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;配置信息</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    public var config: Config</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;写入文件所在的文件夹，默认在cache文件夹里</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    public let directoryURL: URL</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;修改文件原信息时，所在的队列</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    let metaChangingQueue: DispatchQueue</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">     &#x2F;&#x2F;该方法会在init着调用，保证directoryURLs文件夹，已经被创建过了</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    func prepareDirectory() throws &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">        let fileManager &#x3D; config.fileManager</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">        let path &#x3D; directoryURL.path</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">        guard !fileManager.fileExists(atPath: path) else &#123; return &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">        try fileManager.createDirectory(atPath: path,withIntermediateDirectories: true,attributes: nil)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">    ...下面还有缓存数据，读取数据，判断是否已缓存，删除缓存，删除过期缓存，删除超过sizeLimit的缓存，统计缓存大小等</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<p>通过下面的代码看<code>Backend</code>是如何缓存数据，读取数据，判断是否已缓存，删除缓存，删除过期缓存，删除超过 sizeLimit 的缓存，统计缓存大小以及如何通过 key 生成文件名的？代码中有详细的注释。注：下面的代码删除了一些非核心代码，比如异常，加锁保证线程安全等</p>
+<h5 id="通过-key-生成文件名"><a href="#通过-key-生成文件名" class="headerlink" title="通过 key 生成文件名"></a>通过 key 生成文件名</h5><p>下面那段代码和源码中不太一样，但逻辑是一样的，我改成这样是因为方面我描述</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;首先判断是否使用key的MD5值当做文件名，若是，则把filename设置成key.MD5</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;然后再判断是否设置了扩展名，若设置了，则把扩展名拼接到filename上</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">func cacheFileName(forKey key: String) -&gt; String &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    var filename &#x3D; key</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    if config.usesHashedFileName &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">        filename &#x3D; key.kf.md5</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    if let ext &#x3D; config.pathExtension &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">        filename &#x3D;  &quot;\(filename).\(ext)&quot;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    return filename</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="缓存数据-1"><a href="#缓存数据-1" class="headerlink" title="缓存数据"></a>缓存数据</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">func store(</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    value: T,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    forKey key: String,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    expiration: StorageExpiration? &#x3D; nil) throws</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">&#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;获取存活时间，若缓存时没设置，则从配置中获取</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    let expiration &#x3D; expiration ?? config.expiration</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">     &#x2F;&#x2F;判断是否过期，若已经过期直接返回</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    guard !expiration.isExpired else &#123; return &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 把value转成data，这里value类型是DataTransformable，需要实现toData等其他方法</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    let data: try value.toData()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;通过cacheKeyc生成一个完整的路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;完整的路径等于directoryURL+filename</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">    let fileURL &#x3D; cacheFileURL(forKey: key)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">    let now &#x3D; Date()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;把当前时间设置为文件的创建时间，把过期时间设置为文件的修改时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">    let attributes: [FileAttributeKey : Any] &#x3D; [</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">        .creationDate: now.fileAttributeDate,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">        .modificationDate: expiration.estimatedExpirationSinceNow.fileAttributeDate</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">    ]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;通过fileManager把data写入文件</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">    config.fileManager.createFile(atPath: fileURL.path, contents: data, attributes: attributes)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<p>上面代码中给文件设置创建时间和修改时间用的是给 Date 扩展的计算属性 fileAttributeDate，fileAttributeDate 返回的是 Date(timeIntervalSince1970: ceil(timeIntervalSince1970))，也就是说把 date 的秒值向上取整后再转成 date，为什么要这么做呢？作者解释说，date 在内容中实际是一个 double 类型的值，而在 file 的属性中，只接受 Int 类型的值，会默认舍去小数部分，会导致对测试不友好，所以就改成这样了，我不是很理解为什么对测试不友好，难道是会导致提前一会结束过期吗？</p>
+<h5 id="加载缓存"><a href="#加载缓存" class="headerlink" title="加载缓存"></a>加载缓存</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">func value(</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    forKey key: String,&#x2F;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    referenceDate: Date,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    actuallyLoad: Bool,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    extendingExpiration: ExpirationExtending) throws -&gt; T?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">&#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    let fileManager &#x3D; config.fileManager</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;通过cacheKeyc生成一个完整的路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    let fileURL &#x3D; cacheFileURL(forKey: key)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    let filePath &#x3D; fileURL.path</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;判断是否存在该文件是否存在</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">    guard fileManager.fileExists(atPath: filePath) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">        return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;通过fileURL生成一个FileMeta文件描述信息的类</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">    let resourceKeys: Set&lt;URLResourceKey&gt; &#x3D; [.contentModificationDateKey, .creationDateKey]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">    let meta &#x3D; try FileMeta(fileURL: fileURL, resourceKeys: resourceKeys)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;判断文件的过期时间是否大于referenceDate</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">    if meta.expired(referenceDate: referenceDate) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">        return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;判断是否是真的需要去加载数据，比如判断是否已缓存的时候，就不需要真的去加载，只要知道有就好了</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">    if !actuallyLoad &#123; return T.empty &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">24</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;读取文件</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">25</span></pre></td><td class="code"><pre><span class="line">    let data &#x3D; try Data(contentsOf: fileURL)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">26</span></pre></td><td class="code"><pre><span class="line">    let obj &#x3D; try T.fromData(data)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">27</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;更新文件的描述信息，本质也是为了h更新最后一次的读取时间和过期时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">28</span></pre></td><td class="code"><pre><span class="line">    metaChangingQueue.async &#123; meta.extendExpiration(with: fileManager, extendingExpiration: extendingExpiration) &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">29</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="判断是否已缓存"><a href="#判断是否已缓存" class="headerlink" title="判断是否已缓存"></a>判断是否已缓存</h5><p>通过调用 value 方法，判断 value 的返回值是否为 nil，调用时会把 actuallyLoad 参数传为 false，这样就不会去读取文件</p>
+<h5 id="通过-key-删除缓存，以及删除所有缓存"><a href="#通过-key-删除缓存，以及删除所有缓存" class="headerlink" title="通过 key 删除缓存，以及删除所有缓存"></a>通过 key 删除缓存，以及删除所有缓存</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;通过key生成URL，然后把该文件删除</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">func remove(forKey key: String) throws &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    let fileURL &#x3D; cacheFileURL(forKey: key)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    config.fileManager.removeItem(at: url)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;直接把文件夹删除</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">func removeAll(skipCreatingDirectory: Bool) throws &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    try config.fileManager.removeItem(at: directoryURL)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    if !skipCreatingDirectory &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">        try prepareDirectory()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="获取缓存大小"><a href="#获取缓存大小" class="headerlink" title="获取缓存大小"></a>获取缓存大小</h5><p>获取文件夹下的所有文件，并把每个文件的大小加起来</p>
+<h5 id="删除过期的缓存"><a href="#删除过期的缓存" class="headerlink" title="删除过期的缓存"></a>删除过期的缓存</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;删除在指定时间过期的缓存，若传入当前时间，则是删除现在已经过期的文件</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;返回值：删除的文件路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">func removeExpiredValues(referenceDate: Date &#x3D; Date()) throws -&gt; [URL] &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    let propertyKeys: [URLResourceKey] &#x3D; [</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">        .isDirectoryKey,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">        .contentModificationDateKey</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    ]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;获取所有的文件URL</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    let urls &#x3D; try allFileURLs(for: propertyKeys)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    let keys &#x3D; Set(propertyKeys)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;过滤出过期的文件URL</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">    let expiredFiles &#x3D; urls.filter &#123; fileURL in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">        let meta &#x3D; FileMeta(fileURL: fileURL, resourceKeys: keys)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">        if meta.isDirectory &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">            return false</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">        &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">        return meta.expired(referenceDate: referenceDate)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;遍历所有的过期的文件UR，依次删除它们</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">    try expiredFiles.forEach &#123; url in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">        try removeFile(at: url)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">    return expiredFiles</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">24</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="缓存大小超过-sizeLimit-时删除缓存"><a href="#缓存大小超过-sizeLimit-时删除缓存" class="headerlink" title="缓存大小超过 sizeLimit 时删除缓存"></a>缓存大小超过 sizeLimit 时删除缓存</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">func removeSizeExceededValues() throws -&gt; [URL] &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;如果sizeLimit &#x3D;&#x3D; 0代表不限制大小，直接返回</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">      if config.sizeLimit &#x3D;&#x3D; 0 &#123; return [] &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">      var size &#x3D; try totalSize()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;如果当前的缓存大小小于sizeLimit直接返回</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">      if size &lt; config.sizeLimit &#123; return [] &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">      let urls &#x3D; 获取所有的URLs</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;通过urls生成所有的文件信息，这里包含的信息有是否是文件夹，创建时间，和文件大小</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">      var pendings: [FileMeta] &#x3D; urls.compactMap &#123; fileURL in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">          guard let meta &#x3D; try? FileMeta(fileURL: fileURL, resourceKeys: keys) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">              return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">          &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">          return meta</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">      &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;通过创建时间排序，也就是通过最后一次的读取时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">      pendings.sort(by: FileMeta.lastAccessDate)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">      var removed: [URL] &#x3D; []</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">      let target &#x3D; config.sizeLimit &#x2F; 2</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">      &#x2F;&#x2F;直到当前缓存大小小于sizeLimit的2分之一，否则按照最后的读取时间一次删除</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">      while size &gt; target, let meta &#x3D; pendings.popLast() &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">          size -&#x3D; UInt(meta.fileSize)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">          try removeFile(at: meta.url)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">          removed.append(meta.url)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">24</span></pre></td><td class="code"><pre><span class="line">      &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">25</span></pre></td><td class="code"><pre><span class="line">      return removed</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">26</span></pre></td><td class="code"><pre><span class="line">  &#125;</span></pre></td></tr></table></figure>
+
+<h3 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h3><p>在 ImageCache 里监听了三个通知，分别是收到内存警告，应用即将被杀死，应用已经进入到后台，在这三个通知里分别做了，清空内存缓存，异步的清除磁盘过期缓存和磁盘大小超过 simeLimit 清除缓存，在后台清除磁盘过期缓存和磁盘大小超过 simeLimit 清除缓存</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Swift/" rel="tag"># Swift</a>
+              <a href="/tags/Kingfisher/" rel="tag"># Kingfisher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B/" rel="prev" title="Kingfisher源码解析之加载流程">
+      <i class="fa fa-chevron-left"></i> Kingfisher源码解析之加载流程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/" rel="next" title="Kingfisher源码解析之Processor和CacheSerializer">
+      Kingfisher源码解析之Processor和CacheSerializer <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#内存缓存"><span class="nav-number">1.</span> <span class="nav-text">内存缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Config的主要内容"><span class="nav-number">1.1.</span> <span class="nav-text">Config的主要内容</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#StorageObject-lt-T-gt-的主要内容"><span class="nav-number">1.2.</span> <span class="nav-text">StorageObject&lt;T&gt;的主要内容</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Backend的主要内容"><span class="nav-number">1.3.</span> <span class="nav-text">Backend的主要内容</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#缓存数据"><span class="nav-number">1.4.</span> <span class="nav-text">缓存数据</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#读取数据-判断数据是否已缓存"><span class="nav-number">1.5.</span> <span class="nav-text">读取数据,判断数据是否已缓存</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#删除缓存"><span class="nav-number">1.6.</span> <span class="nav-text">删除缓存</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#删除过期数据，这里使用-Set-存储-key-的原因是-NSCache，并没有像-Dictionary-一样提供获取-allKeys-或-allValues-的方法"><span class="nav-number">1.7.</span> <span class="nav-text">删除过期数据，这里使用 Set 存储 key 的原因是 NSCache，并没有像 Dictionary 一样提供获取 allKeys 或 allValues 的方法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#磁盘缓存"><span class="nav-number"></span> <span class="nav-text">磁盘缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Config的主要内容-1"><span class="nav-number">0.1.</span> <span class="nav-text">Config的主要内容</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#FileMeta的主要内容"><span class="nav-number">0.2.</span> <span class="nav-text">FileMeta的主要内容</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Backend的主要内容-1"><span class="nav-number">0.3.</span> <span class="nav-text">Backend的主要内容</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#通过-key-生成文件名"><span class="nav-number">0.4.</span> <span class="nav-text">通过 key 生成文件名</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#缓存数据-1"><span class="nav-number">0.5.</span> <span class="nav-text">缓存数据</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#加载缓存"><span class="nav-number">0.6.</span> <span class="nav-text">加载缓存</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#判断是否已缓存"><span class="nav-number">0.7.</span> <span class="nav-text">判断是否已缓存</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#通过-key-删除缓存，以及删除所有缓存"><span class="nav-number">0.8.</span> <span class="nav-text">通过 key 删除缓存，以及删除所有缓存</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#获取缓存大小"><span class="nav-number">0.9.</span> <span class="nav-text">获取缓存大小</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#删除过期的缓存"><span class="nav-number">0.10.</span> <span class="nav-text">删除过期的缓存</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#缓存大小超过-sizeLimit-时删除缓存"><span class="nav-number">0.11.</span> <span class="nav-text">缓存大小超过 sizeLimit 时删除缓存</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#补充"><span class="nav-number"></span> <span class="nav-text">补充</span></a></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">李坤坤</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lkkwxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lkkwxy" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/wxylkk@163.com" title="E-Mail → wxylkk@163.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005055629872637/home" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005055629872637&#x2F;home" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/578ecc011532bc0061002f3e" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;578ecc011532bc0061002f3e" rel="noopener" target="_blank"><i class="fa fa-fw fa-custom juejin"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.0.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

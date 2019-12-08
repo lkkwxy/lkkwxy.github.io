@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta name="keywords" content="Swift,Kingfisher">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kingfisher源码解析之加载动图">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;02&#x2F;Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE&#x2F;index.html">
+<meta property="og:site_name" content="李坤坤">
+<meta property="og:description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-12-01T16:00:00.000Z">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kingfisher源码解析之加载动图 | 李坤坤</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">李坤坤</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="李坤坤">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="李坤坤">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kingfisher源码解析之加载动图
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-02 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-02T00:00:00+08:00">2019-12-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Swift/" itemprop="url" rel="index">
+                    <span itemprop="name">Swift</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/">Kingfisher 源码解析之使用</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/">Kingfisher 源码解析之 Options 解释</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B/">Kingfisher 源码解析之加载流程</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/">Kingfisher 源码解析之加载动图</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/">Kingfisher 源码解析之 ImageCache</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/">Kingfisher 源码解析之 Processor 和 CacheSerializer</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/06/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImagePrefetcher/">Kingfisher 源码解析之 ImagePrefetcher</a></li>
+</ul>
+<h3 id="Kingfisher-加载-GIF-的两种使用方式"><a href="#Kingfisher-加载-GIF-的两种使用方式" class="headerlink" title="Kingfisher 加载 GIF 的两种使用方式"></a>Kingfisher 加载 GIF 的两种使用方式</h3><ol>
+<li><p>使用 UIImageView</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let imageView &#x3D; UIImageView()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: URL(string: &quot;gif_url&quot;)!)</span></pre></td></tr></table></figure></li>
+<li><p>使用 AnimatedImageView，AnimatedImageView 继承自 UIImageView</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let imageView &#x3D; AnimatedImageView()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: URL(string: &quot;gif_url&quot;)!)</span></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h3 id="Kingfisher-内部是如何处理的"><a href="#Kingfisher-内部是如何处理的" class="headerlink" title="Kingfisher 内部是如何处理的"></a>Kingfisher 内部是如何处理的</h3><p>看了上面 2 个显示 GIF 的方法，我们可能下面 2 个疑问，如果你对下面 2 个问题很清楚，本篇文章你可以跳过了</p>
+<ul>
+<li>加载 GIF 图和加载普通图片的使用方式是一样的，它是怎么做到如果是 GIF 图就显示 GIF 图，是普通图片就是现实普通图片的</li>
+<li>使用 UIImageView 和 AnimatedImageView 的调用方式也是一样的，这 2 中加载方式是否不同<br>我们先来看第一个问题，Kingfisher 是如何区分 GIF 图和普通图片的,这个问题分 3 种情况</li>
+</ul>
+<ol>
+<li>图片通过 Resource（通过网络下载的）或者 ImageDataProvider 提供的</li>
+<li>图片是从缓存中内存缓存中加载的</li>
+<li>图片是从磁盘缓存中加载的</li>
+</ol>
+<p>首先来看第一种情况，在这之前，先来看下<code>Kingfisher</code>中配置项的这个配置<code>public var processor: ImageProcessor = DefaultImageProcessor.default</code>，这个配置是提供网络下载完成或者加载完成本地 Data 之后，会调用<code>processor</code>的<code>func process(item: ImageProcessItem, options: KingfisherParsedOptionsInfo) -&gt; KFCrossPlatformImage?</code>方法，把 Data 转换成 UIImage，而 processor 的默认值是<code>DefaultImageProcessor</code>，在<code>DefaultImageProcessor</code>该方法的实现会调用下面这个方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public static func image(data: Data, options: ImageCreatingOptions) -&gt; KFCrossPlatformImage? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">     var image: KFCrossPlatformImage?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">     switch data.kf.imageFormat &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">     case .JPEG:</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">         image &#x3D; KFCrossPlatformImage(data: data, scale: options.scale)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">     case .PNG:</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">         image &#x3D; KFCrossPlatformImage(data: data, scale: options.scale)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">     case .GIF:</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">         image &#x3D; KingfisherWrapper.animatedImage(data: data, options: options)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">     case .unknown:</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">         image &#x3D; KFCrossPlatformImage(data: data, scale: options.scale)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">     &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">     return image</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line"> &#125;</span></pre></td></tr></table></figure>
+
+<p>在这个方法里会先判断图片的类型，判断的方式是取 data 的前 8 个字节，感兴趣的话，可以去源码里看下，这里就不贴了，如果是 GIF 图的话<code>KingfisherWrapper.animatedImage</code>这个方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public static func animatedImage(data: Data, options: ImageCreatingOptions) -&gt; KFCrossPlatformImage? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    let info: [String: Any] &#x3D; [</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">        kCGImageSourceShouldCache as String: true,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">        kCGImageSourceTypeIdentifierHint as String: kUTTypeGIF</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    ]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    guard let imageSource &#x3D; CGImageSourceCreateWithData(data as CFData, info as CFDictionary) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">        return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;这里去掉了Macos下的处理</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    var image: KFCrossPlatformImage?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    if options.preloadAll || options.onlyFirstFrame &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">        guard let animatedImage &#x3D; GIFAnimatedImage(from: imageSource, for: info, options: options) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">            return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">        &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">        if options.onlyFirstFrame &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">            image &#x3D; animatedImage.images.first</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">        &#125; else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">            let duration &#x3D; options.duration &lt;&#x3D; 0.0 ? animatedImage.duration : options.duration</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">            image &#x3D; .animatedImage(with: animatedImage.images, duration: duration)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">        &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">        image?.kf.animatedImageData &#x3D; data</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">    &#125; else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">        image &#x3D; KFCrossPlatformImage(data: data, scale: options.scale)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">24</span></pre></td><td class="code"><pre><span class="line">        var kf &#x3D; image?.kf</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">25</span></pre></td><td class="code"><pre><span class="line">        kf?.imageSource &#x3D; imageSource</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">26</span></pre></td><td class="code"><pre><span class="line">        kf?.animatedImageData &#x3D; data</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">27</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">28</span></pre></td><td class="code"><pre><span class="line">    return image</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">29</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<p>这个方法时展示 GIF 的核心逻辑，下面详细介绍下这个方法<br>首先把 data 转成 CGImageSource，然后判断<code>options.preloadAll || options.onlyFirstFrame</code> 的值，其中 onlyFirstFrame 默认值为 false，若为 false 则只加载第一帧，preloadAll 这个值，在我们使用<code>imageView.kf.setImage</code>时，则取决于 imageView 的<code>func shouldPreloadAllAnimation()</code>函数的返回值，此函数是 Kingfisher 给 UIImageView 扩展的方法，在 UIImageVIew 中一直返回 true</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">@objc extension KFCrossPlatformImageView &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    func shouldPreloadAllAnimation() -&gt; Bool &#123; return true &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<p>也就是说在默认情况下，在上面的方法里会把<code>imageSource</code>转换成<code>GIFAnimatedImage</code>类的实例，而在这个类的实例里，做了获取 GIF 图的每一帧，并获取每一帧的时间然后加起来，最后通过<code>UIImage.animatedImage(with: [images], duration: duration)</code>生成一个动图的 image 实例，然后把 image 赋值给<code>imageView.image</code></p>
+<p>下面把 imageSource 转成 animatedImage 的代码，忽略了较多的异常情况</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let options: [String: Any] &#x3D; [</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    kCGImageSourceShouldCache as String: true,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    kCGImageSourceTypeIdentifierHint as String:kUTTypeGIF</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;把data转换成imageSource</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">let imageSource &#x3D; CGImageSourceCreateWithData(data as CFData, options as CFDictionary)!</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;获取GIF的总帧数</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">let frameCount &#x3D; CGImageSourceGetCount(imageSource)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">var images &#x3D; [UIImage]()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">var gifDuration &#x3D; 0.0</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">for i in 0..&lt;frameCount &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;获取第i帧的图片，并把图片添加到数组里去</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">    let cgImage &#x3D; CGImageSourceCreateImageAtIndex(imageSource, i, options as CFDictionary)!</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">    images.append( UIImage(cgImage: cgImage, scale: 1, orientation: .up))</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;若只有一帧，把动画时间设置成无限大，否则的话获取每一帧的时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">    if frameCount &#x3D;&#x3D; 1 &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">        gifDuration &#x3D; Double.infinity</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">    &#125;else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">        &#x2F;&#x2F;获取每一帧的属性，</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">        let properties &#x3D; CGImageSourceCopyPropertiesAtIndex(imageSource, i, nil) as! [String: Any]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">        &#x2F;&#x2F;获取属性中的GIF信息，以及获取信息中的时间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">        let gifInfo &#x3D; properties[kCGImagePropertyGIFDictionary as String] as! [String: Any]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">        let unclampedDelayTime &#x3D; gifInfo[kCGImagePropertyGIFUnclampedDelayTime as String] as? NSNumber</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">24</span></pre></td><td class="code"><pre><span class="line">        let delayTime &#x3D; gifInfo[kCGImagePropertyGIFDelayTime as String] as? NSNumber</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">25</span></pre></td><td class="code"><pre><span class="line">        let duration &#x3D; unclampedDelayTime ?? delayTime</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">26</span></pre></td><td class="code"><pre><span class="line">        gifDuration +&#x3D; duration?.doubleValue ?? 0.1</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">27</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">28</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">29</span></pre></td><td class="code"><pre><span class="line">imageView.image &#x3D; UIImage.animatedImage(with: images, duration: gifDuration)</span></pre></td></tr></table></figure>
+
+<p>接着看第二种情况，若是从内存缓存中加载的，缓存的就是动图，所以是直接加载的</p>
+<p>最后看第三种情况，若是从磁盘中缓存的，Kingfisher 又是如何处理的，在这之前，先来看下<code>Kingfisher</code>中配置项的这个配置<code>public var cacheSerializer: CacheSerializer = DefaultCacheSerializer.default</code>，这个配置是提供当从磁盘中读取完数据之后，把数据反序列化为 UIImage，会调用<code>cacheSerializer</code>的<code>public func image(with data: Data, options: KingfisherParsedOptionsInfo) -&gt; KFCrossPlatformImage?</code>方法，把 Data 反序列化为 UIImage，而 cacheSerializer 的默认值是<code>DefaultCacheSerializer</code>，在<code>DefaultCacheSerializer</code>该方法的实现也会调用<code>public static func image(data: Data, options: ImageCreatingOptions) -&gt; KFCrossPlatformImage?</code>这个方法，下面就是跟第一种情况的逻辑一样了</p>
+<p>下面来看 AnimatedImageView 是如何加载 GIF 图的，上面说 imageView 的<code>shouldPreloadAllAnimation</code>一直返回 true，而 AnimatedImageView 重写了此函数，并返回 false，因此<code>option.preloadAll</code>等于 false，所以会走 else 里的逻辑，把 data 转成 image，利用关联属性，给 image 添加了两个属性<code>imageSource:CGImageSource</code>和<code>animatedImageData:Data</code>，并对其进行赋值</p>
+<p>到现在为止，我们还是没有看到 AnimatedImageView 是如何展示 GIF 图的。接着往下看<br>AnimatedImageView 重写了 image 的 didSet，而上面的方法返回后，会对 imageView.image 进行赋值，正好触发了 image 的 didSet，在这里开启了一个 CADisplayLink 和 Animator。</p>
+<p>Animator 为 imageView 提供动图的数据，每一帧的图片以及时间，需要注意的是，它并不会一次加载好所有帧的图片，默认情况下，只是先加载前 10 帧，剩下的等需要的再去加载</p>
+<p>CADisplayLink，在每次屏幕刷新的时候，去判断是否需要展示新的一帧图片，若需要，则刷新 imageView</p>
+<p>这里刷新是调用<code>self.layer.setNeedsDisplay()</code>,而调用此方法，系统会调用<code>layer.delegate</code>里的<code>open func display(_ layer: CALayer)</code>，而 UIView 的 layer.delegate 是自己本身，所以会调用 AnimatedImageView 重写的 display 方法，这是我最开始没有想明白的地方</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">override open func display(_ layer: CALayer) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">     if let currentFrame &#x3D; animator?.currentFrameImage &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">         layer.contents &#x3D; currentFrame.cgImage</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">     &#125; else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">         layer.contents &#x3D; image?.cgImage</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">     &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line"> &#125;</span></pre></td></tr></table></figure>
+
+<h3 id="UIImageView-和-AnimatedImageView-在展示-GIF-图有什么不同"><a href="#UIImageView-和-AnimatedImageView-在展示-GIF-图有什么不同" class="headerlink" title="UIImageView 和 AnimatedImageView 在展示 GIF 图有什么不同"></a>UIImageView 和 AnimatedImageView 在展示 GIF 图有什么不同</h3><p>AnimatedImageView 支持一下 5 点特性，而 UIImageView 都不支持</p>
+<ol>
+<li><code>repeatCount</code>：循环次数</li>
+<li><code>autoPlayAnimatedImage</code>：是否自动开始播放</li>
+<li><code>framePreloadCount</code>：预加载的帧数</li>
+<li><code>backgroundDecode</code>：是否在后台解码</li>
+<li><code>runLoopMode</code>：GIF 播放所在的 runLoopMode</li>
+</ol>
+<p>并且 AnimatedImageView 由于不用同时解码所有帧的图形数据，所以更节省内存，但是由于多了一些计算所以会比较浪费 CPU</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Swift/" rel="tag"># Swift</a>
+              <a href="/tags/Kingfisher/" rel="tag"># Kingfisher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/" rel="prev" title="Kingfisher源码解析之Options解释">
+      <i class="fa fa-chevron-left"></i> Kingfisher源码解析之Options解释
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B/" rel="next" title="Kingfisher源码解析之加载流程">
+      Kingfisher源码解析之加载流程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Kingfisher-加载-GIF-的两种使用方式"><span class="nav-number">1.</span> <span class="nav-text">Kingfisher 加载 GIF 的两种使用方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Kingfisher-内部是如何处理的"><span class="nav-number">2.</span> <span class="nav-text">Kingfisher 内部是如何处理的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UIImageView-和-AnimatedImageView-在展示-GIF-图有什么不同"><span class="nav-number">3.</span> <span class="nav-text">UIImageView 和 AnimatedImageView 在展示 GIF 图有什么不同</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">李坤坤</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lkkwxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lkkwxy" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/wxylkk@163.com" title="E-Mail → wxylkk@163.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005055629872637/home" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005055629872637&#x2F;home" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/578ecc011532bc0061002f3e" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;578ecc011532bc0061002f3e" rel="noopener" target="_blank"><i class="fa fa-fw fa-custom juejin"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.0.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

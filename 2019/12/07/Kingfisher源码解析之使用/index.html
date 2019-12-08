@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta name="keywords" content="Swift,Kingfisher">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kingfisher源码解析之使用">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;07&#x2F;Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8&#x2F;index.html">
+<meta property="og:site_name" content="李坤坤">
+<meta property="og:description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-12-06T16:00:00.000Z">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kingfisher源码解析之使用 | 李坤坤</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">李坤坤</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="李坤坤">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="李坤坤">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kingfisher源码解析之使用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-07 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-07T00:00:00+08:00">2019-12-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Swift/" itemprop="url" rel="index">
+                    <span itemprop="name">Swift</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/">Kingfisher 源码解析之使用</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/">Kingfisher 源码解析之 Options 解释</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B/">Kingfisher 源码解析之加载流程</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/">Kingfisher 源码解析之加载动图</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/">Kingfisher 源码解析之 ImageCache</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/">Kingfisher 源码解析之 Processor 和 CacheSerializer</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/06/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImagePrefetcher/">Kingfisher 源码解析之 ImagePrefetcher</a></li>
+</ul>
+<h3 id="1-基本使用"><a href="#1-基本使用" class="headerlink" title="1. 基本使用"></a>1. 基本使用</h3><h5 id="1-1-通过-Resource-设置图片"><a href="#1-1-通过-Resource-设置图片" class="headerlink" title="1.1 通过 Resource 设置图片"></a>1.1 通过 Resource 设置图片</h5><p>Kingfisher 中内置的 ImageResource 和 URL 实现了 Resource 协议，ImageResource 和 URL 的区别是 ImageResource 可自定义 cacheKey。</p>
+<ul>
+<li>URL 设置图片</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let url &#x3D; URL(string: &quot;https:&#x2F;&#x2F;test&#x2F;image.jpg&quot;)!</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url)</span></pre></td></tr></table></figure>
+
+<ul>
+<li>ImageResource</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let imageResource &#x3D; ImageResource(downloadURL: url, cacheKey: &quot;custom_cache_key&quot;)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: imageResource)</span></pre></td></tr></table></figure>
+
+<h5 id="1-2-通过-ImageDataProvider-设置图片"><a href="#1-2-通过-ImageDataProvider-设置图片" class="headerlink" title="1.2 通过 ImageDataProvider 设置图片"></a>1.2 通过 ImageDataProvider 设置图片</h5><p>Kingfisher 内置了 LocalFileImageDataProvider，Base64ImageDataProvider，RawImageDataProvider 三种 ImageDataProvider。</p>
+<ul>
+<li>LocalFileImageDataProvider</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let fileUrl &#x3D; Bundle.main.url(forResource: &quot;image&quot;, withExtension: &quot;jpg&quot;)!</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let imageDataProvider &#x3D;  LocalFileImageDataProvider(fileURL: fileUrl)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: imageDataProvider)</span></pre></td></tr></table></figure>
+
+<ul>
+<li>Base64ImageDataProvider</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let base64String &#x3D; &quot;....&quot;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let base64ImageDataProvider &#x3D; Base64ImageDataProvider(base64String: base64String, cacheKey: &quot;base64_cache_key&quot;)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: base64ImageDataProvider)</span></pre></td></tr></table></figure>
+
+<ul>
+<li>RawImageDataProvider</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let data &#x3D; Data()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let dataImageDataProvider &#x3D; RawImageDataProvider(data: data, cacheKey: &quot;data_cache_key&quot;)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: dataImageDataProvider)</span></pre></td></tr></table></figure>
+
+<ul>
+<li>自定义 ImageDataProvider</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;定义</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">public struct FileNameImageDataProvider : ImageDataProvider &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    public let cacheKey: String</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    public let fileName: String</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    public init(fileName: String, cacheKey: String? &#x3D; nil) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">        self.fileName &#x3D; fileName</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">        self.cacheKey &#x3D; cacheKey ?? fileName</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    public func data(handler: @escaping (Result&lt;Data, Error&gt;) -&gt; Void) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">        if let fileURL &#x3D; Bundle.main.url(forResource: fileName, withExtension: &quot;&quot;) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">            handler(Result(catching: &#123; try Data(contentsOf: fileURL) &#125;))</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">        &#125;else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">            let error &#x3D; NSError(domain: &quot;文件不存在&quot;, code: -1, userInfo: [&quot;fileName&quot;:fileName])</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">            handler(.failure(error))</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">        &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;使用</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">let fileNameImageDataProvider &#x3D; FileNameImageDataProvider(fileName: &quot;image.jpg&quot;)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: fileNameImageDataProvider)</span></pre></td></tr></table></figure>
+
+<h5 id="1-3-展示-placeholder"><a href="#1-3-展示-placeholder" class="headerlink" title="1.3 展示 placeholder"></a>1.3 展示 placeholder</h5><ul>
+<li>使用 UIImage 设置 placeholder</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let placeholderImage &#x3D; UIImage(named: &quot;placeholder.png&quot;)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, placeholder: placeholderImage)</span></pre></td></tr></table></figure>
+
+<ul>
+<li>通过自定义 View 设置 placeholder</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 定义</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 需要使自定义View遵循Placeholder协议</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 可以什么都不实现，是因为当Placeholder为UIview的时候有默认实现</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">class PlaceholderView: UIView, Placeholder &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 使用</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">let placeholderView &#x3D; PlaceholderView()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, placeholder: placeholderView)</span></pre></td></tr></table></figure>
+
+<h5 id="1-4-加载-GIF-图"><a href="#1-4-加载-GIF-图" class="headerlink" title="1.4 加载 GIF 图"></a>1.4 加载 GIF 图</h5><ul>
+<li>通过 UIImageView 加载 GIF 图</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let url &#x3D; URL(string: &quot;https:&#x2F;&#x2F;test&#x2F;image.gif&quot;)!</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url)</span></pre></td></tr></table></figure>
+
+<ul>
+<li>通过 AnimatedImageView 加载 GIF 图</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let url &#x3D; URL(string: &quot;https:&#x2F;&#x2F;test&#x2F;image.gif&quot;)!</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">animatedImageView.kf.setImage(with: url)</span></pre></td></tr></table></figure>
+
+<p>上面二者的区别请参考<a href="https://juejin.im/post/5de5275a6fb9a071ba2e6c77" target="_blank" rel="noopener">Kingfisher 源码解析之加载动图
+</a></p>
+<h5 id="1-5-设置指示器"><a href="#1-5-设置指示器" class="headerlink" title="1.5 设置指示器"></a>1.5 设置指示器</h5><ul>
+<li>不使用指示器</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">imageView.kf.indicatorType &#x3D; .none</span></pre></td></tr></table></figure>
+
+<ul>
+<li>使用 UIActivityIndicatorView 作为指示器</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">imageView.kf.indicatorType &#x3D; .activity</span></pre></td></tr></table></figure>
+
+<ul>
+<li>使用图片作为指示器</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let path &#x3D; Bundle.main.path(forResource: &quot;loader&quot;, ofType: &quot;gif&quot;)!</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let data &#x3D; try! Data(contentsOf: URL(fileURLWithPath: path))</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">imageView.kf.indicatorType &#x3D; .image(imageData: data)</span></pre></td></tr></table></figure>
+
+<ul>
+<li>使用自定义 View 作为指示器</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 定义</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">struct CustomIndicator: Indicator &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    let view: UIView &#x3D; UIView()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    func startAnimatingView() &#123; view.isHidden &#x3D; false &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    func stopAnimatingView() &#123; view.isHidden &#x3D; true &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    init() &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">        view.backgroundColor &#x3D; .red</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 使用</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">let indicator &#x3D; CustomIndicator()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">imageView.kf.indicatorType &#x3D; .custom(indicator: indicator)</span></pre></td></tr></table></figure>
+
+<h5 id="1-6-设置-transition"><a href="#1-6-设置-transition" class="headerlink" title="1.6 设置 transition"></a>1.6 设置 transition</h5><p>transition 用于图片加载完成之后的展示动画，有以下类型</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public enum ImageTransition &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 无动画</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    case none</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 相当于UIView.AnimationOptions.transitionCrossDissolve</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    case fade(TimeInterval)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 相当于UIView.AnimationOptions.transitionFlipFromLeft</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    case flipFromLeft(TimeInterval)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 相当于UIView.AnimationOptions.transitionFlipFromRight</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    case flipFromRight(TimeInterval)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 相当于UIView.AnimationOptions.transitionFlipFromTop</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    case flipFromTop(TimeInterval)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 相当于UIView.AnimationOptions.transitionFlipFromBottom</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">    case flipFromBottom(TimeInterval)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F; 自定义动画</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">    case custom(duration: TimeInterval,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">                 options: UIView.AnimationOptions,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">              animations: ((UIImageView, UIImage) -&gt; Void)?,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">              completion: ((Bool) -&gt; Void)?)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<p>使用方式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, options: [.transition(.fade(0.2))])</span></pre></td></tr></table></figure>
+
+<h3 id="2-Processor"><a href="#2-Processor" class="headerlink" title="2. Processor"></a>2. Processor</h3><h5 id="2-1-DefaultImageProcessor"><a href="#2-1-DefaultImageProcessor" class="headerlink" title="2.1 DefaultImageProcessor"></a>2.1 DefaultImageProcessor</h5><p>将下载的数据转换为相应的 UIImage。支持 PNG，JPEG 和 GIF 格式。</p>
+<h5 id="2-2-BlendImageProcessor"><a href="#2-2-BlendImageProcessor" class="headerlink" title="2.2 BlendImageProcessor"></a>2.2 BlendImageProcessor</h5><p>修改图片的混合模式（这里不知道这么描述对不对），核心实现如下</p>
+<ol>
+<li>首先利用 DefaultImageProcessor 把 Data 转成 image，然后去绘制</li>
+<li>获取上下文</li>
+<li>为上下文填充背景色</li>
+<li>调用 image.draw 函数设置混合模式</li>
+<li>从上下文中获取图片为 processedImage</li>
+<li>释放上下文，并返回 processedImage</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let image &#x3D; 处理之前的图片</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">UIGraphicsBeginImageContextWithOptions(size, false, scale)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">let context &#x3D; UIGraphicsGetCurrentContext()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">let rect &#x3D; CGRect(origin: .zero, size: size)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">backgroundColor.setFill()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">UIRectFill(rect)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">image.draw(in: rect, blendMode: blendMode, alpha: alpha)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">let cgImage &#x3D; context.makeImage()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">let processedImage &#x3D; UIImage(cgImage: cgImage, scale: scale, orientation: image.orientation)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">UIGraphicsEndImageContext()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">return processedImage</span></pre></td></tr></table></figure>
+
+<h5 id="2-3-OverlayImageProcessor"><a href="#2-3-OverlayImageProcessor" class="headerlink" title="2.3 OverlayImageProcessor"></a>2.3 OverlayImageProcessor</h5><p>在 image 上添加一层覆盖，其本质也是混合模式，逻辑大致同上</p>
+<h5 id="2-4-BlurImageProcessor"><a href="#2-4-BlurImageProcessor" class="headerlink" title="2.4 BlurImageProcessor"></a>2.4 BlurImageProcessor</h5><p>给图片添加高斯模糊，用 vimage 实现</p>
+<h5 id="2-5-RoundCornerImageProcessor"><a href="#2-5-RoundCornerImageProcessor" class="headerlink" title="2.5 RoundCornerImageProcessor"></a>2.5 RoundCornerImageProcessor</h5><p>给图片添加圆角，支持四个角进行相互组合，使用方式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 设置四个角的圆角</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, options: [.processor(RoundCornerImageProcessor(cornerRadius: 20))])</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 给最上角和右下角设置圆角</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, options: [.processor(RoundCornerImageProcessor(cornerRadius: 20</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">                                            ,roundingCorners: [.topLeft, .bottomRight]))])</span></pre></td></tr></table></figure>
+
+<p>实现方式：利用贝塞尔曲线设置一下带圆角的圆角矩形，然后对图片进行裁剪</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let path &#x3D; UIBezierPath(</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">                roundedRect: rect,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">                byRoundingCorners: corners.uiRectCorner,&#x2F;&#x2F;此参数表示是哪个圆角</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">                cornerRadii: CGSize(width: radius, height: radius)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">            )</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">context.addPath(path.cgPath)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">context.clip()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">image.draw(in: rect)</span></pre></td></tr></table></figure>
+
+<h5 id="2-6-TintImageProcessor"><a href="#2-6-TintImageProcessor" class="headerlink" title="2.6 TintImageProcessor"></a>2.6 TintImageProcessor</h5><p>用颜色给图像主色，实现方式是利用 CoreImage 中的 CIFilter，使用了这 2 个<code>CIFilter(name: &quot;CIConstantColorGenerator&quot;)</code>和<code>CIFilter(name: &quot;CISourceOverCompositing&quot;)</code></p>
+<h5 id="2-7-ColorControlsProcessor"><a href="#2-7-ColorControlsProcessor" class="headerlink" title="2.7 ColorControlsProcessor"></a>2.7 ColorControlsProcessor</h5><p>修改图片的对比度，曝光度，亮度，饱和度，实现方式是利用 CoreImage 中的 CIFilter，使用了这 2 个<code>CIColorControls</code>和<code>CIExposureAdjust</code></p>
+<h5 id="2-8-BlackWhiteProcessor"><a href="#2-8-BlackWhiteProcessor" class="headerlink" title="2.8 BlackWhiteProcessor"></a>2.8 BlackWhiteProcessor</h5><p>使图像灰度化，是 ColorControlsProcessor 的特例</p>
+<h5 id="2-9-CroppingImageProcessor"><a href="#2-9-CroppingImageProcessor" class="headerlink" title="2.9 CroppingImageProcessor"></a>2.9 CroppingImageProcessor</h5><p>对图片进行裁剪</p>
+<h5 id="2-10-DownsamplingImageProcessor"><a href="#2-10-DownsamplingImageProcessor" class="headerlink" title="2.10 DownsamplingImageProcessor"></a>2.10 DownsamplingImageProcessor</h5><p>对图片下采样，一般在较小的 imageView 展示较大的高清图<br>核心实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public static func downsampledImage(data: Data, to pointSize: CGSize, scale: CGFloat) -&gt; KFCrossPlatformImage? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    let imageSourceOptions &#x3D; [kCGImageSourceShouldCache: false] as CFDictionary</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    guard let imageSource &#x3D; CGImageSourceCreateWithData(data as CFData, imageSourceOptions) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">        return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    let maxDimensionInPixels &#x3D; max(pointSize.width, pointSize.height) * scale</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    let downsampleOptions &#x3D; [</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">        kCGImageSourceCreateThumbnailFromImageAlways: true,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">        kCGImageSourceShouldCacheImmediately: true,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">        kCGImageSourceCreateThumbnailWithTransform: true,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">        kCGImageSourceThumbnailMaxPixelSize: maxDimensionInPixels] as CFDictionary</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">    guard let downsampledImage &#x3D; CGImageSourceCreateThumbnailAtIndex(imageSource, 0, downsampleOptions) else &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">        return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">    return KingfisherWrapper.image(cgImage: downsampledImage, scale: scale, refImage: nil)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="2-11-GeneralProcessor"><a href="#2-11-GeneralProcessor" class="headerlink" title="2.11 GeneralProcessor"></a>2.11 GeneralProcessor</h5><p>用于组合多个已有的 Processor，使用方式如下，最终都会转成 GeneralProcessor</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 使用方式1</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let processor1 &#x3D; BlurImageProcessor(blurRadius: 5)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">let processor2 &#x3D; RoundCornerImageProcessor(cornerRadius: 20)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">let generalProcessor &#x3D; GeneralProcessor(identifier: &quot;123&quot;) &#123; (item, options) -&gt; KFCrossPlatformImage? in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">   if let image &#x3D; processor1.process(item: item, options: options) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">       return processor2.process(item: .image(image), options: options)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">   &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">   return nil</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 使用方式2，此方法是Processor的扩展</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">let generalProcessor &#x3D; BlurImageProcessor(blurRadius: 5).append(RoundCornerImageProcessor(cornerRadius: 20)_</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 使用方式3，自定义的操作符，调用了append方法</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">let generalProcessor &#x3D; BlurImageProcessor(blurRadius: 5) |&gt; RoundCornerImageProcessor(cornerRadius: 20)</span></pre></td></tr></table></figure>
+
+<h5 id="2-12-自定义-Processor"><a href="#2-12-自定义-Processor" class="headerlink" title="2.12 自定义 Processor"></a>2.12 自定义 Processor</h5><p>参考<a href="https://juejin.im/post/5de918b86fb9a01626644aae" target="_blank" rel="noopener">Kingfisher 源码解析之 Processor 和 CacheSerializer</a></p>
+<h3 id="3-缓存"><a href="#3-缓存" class="headerlink" title="3 缓存"></a>3 缓存</h3><h5 id="3-1-使用自定义的-cacheKey"><a href="#3-1-使用自定义的-cacheKey" class="headerlink" title="3.1 使用自定义的 cacheKey"></a>3.1 使用自定义的 cacheKey</h5><p>通常情况下，会直接通过 URL 去加载图片，这个时候 cacheKey 是 URL.absoluteString，也可使用 ImageResource 自定义 cacheKey</p>
+<h5 id="3-2-通过-cacheKey-判断是否缓存，以及缓存的类型"><a href="#3-2-通过-cacheKey-判断是否缓存，以及缓存的类型" class="headerlink" title="3.2 通过 cacheKey 判断是否缓存，以及缓存的类型"></a>3.2 通过 cacheKey 判断是否缓存，以及缓存的类型</h5><p>cacheType 是一个枚举，有三个 case:.none 未缓存,.memory 存在内存缓存,.disk 存在磁盘缓存。<br>需要说明的是 cacheKey+processor.identifier 才是缓存的唯一标识符,只是 DefaultImageProcessor 的 identifier 为空字符串，若是在加载的时候指定了非 DefaultImageProcessor 的 Processor，则在查找的时候需要指定 processorIdentifier</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let cache &#x3D; ImageCache.default</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let isCached &#x3D; cache.isCached(forKey: cacheKey)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">let cacheType &#x3D; cache.imageCachedType(forKey: cacheKey)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 若是指定了Processor，可使用此方法查找缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">cache.isCached(forKey: cacheKey, processorIdentifier: processor.identifier)</span></pre></td></tr></table></figure>
+
+<h5 id="3-3-通过-cacheKey，从缓存中获取图片"><a href="#3-3-通过-cacheKey，从缓存中获取图片" class="headerlink" title="3.3 通过 cacheKey，从缓存中获取图片"></a>3.3 通过 cacheKey，从缓存中获取图片</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">cache.retrieveImage(forKey: &quot;cacheKey&quot;) &#123; result in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    switch result &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    case .success(let value):</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">        print(value.cacheType)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">        print(value.image)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    case .failure(let error):</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">        print(error)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="3-4-设置缓存的配置"><a href="#3-4-设置缓存的配置" class="headerlink" title="3.4 设置缓存的配置"></a>3.4 设置缓存的配置</h5><h6 id="3-4-1-设置内存缓存的容量限制（默认值设置物理内存的四分之一）"><a href="#3-4-1-设置内存缓存的容量限制（默认值设置物理内存的四分之一）" class="headerlink" title="3.4.1 设置内存缓存的容量限制（默认值设置物理内存的四分之一）"></a>3.4.1 设置内存缓存的容量限制（默认值设置物理内存的四分之一）</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">cache.memoryStorage.config.totalCostLimit &#x3D; 100 * 1024 * 1024</span></pre></td></tr></table></figure>
+
+<h6 id="3-4-2-设置内存缓存的个数限制"><a href="#3-4-2-设置内存缓存的个数限制" class="headerlink" title="3.4.2 设置内存缓存的个数限制"></a>3.4.2 设置内存缓存的个数限制</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">cache.memoryStorage.config.countLimit &#x3D; 150</span></pre></td></tr></table></figure>
+
+<h6 id="3-4-3-设置内存缓存的过期时间（默认值是-300-秒）"><a href="#3-4-3-设置内存缓存的过期时间（默认值是-300-秒）" class="headerlink" title="3.4.3 设置内存缓存的过期时间（默认值是 300 秒）"></a>3.4.3 设置内存缓存的过期时间（默认值是 300 秒）</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">cache.memoryStorage.config.expiration &#x3D; .seconds(300)</span></pre></td></tr></table></figure>
+
+<p>也可指定某一个图片的内存缓存</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, options:[.memoryCacheExpiration(.never)])</span></pre></td></tr></table></figure>
+
+<h6 id="3-4-4-设置内存缓存的过期时间更新策略"><a href="#3-4-4-设置内存缓存的过期时间更新策略" class="headerlink" title="3.4.4 设置内存缓存的过期时间更新策略"></a>3.4.4 设置内存缓存的过期时间更新策略</h6><p>更新策略是一个枚举，有三个 case,<code>.none</code> 过期时间不更新,<code>.cacheTime</code> 在当前时间上加上过期时间,<code>.expirationTime(_ expiration: StorageExpiration)</code>过期时间更新为指定多久之后过期。默认值是<code>.cacheTime</code>，使用方式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, options:[.memoryCacheAccessExtendingExpiration(.cacheTime)])</span></pre></td></tr></table></figure>
+
+<h6 id="3-4-5-设置内存缓存清除过期内存的时间间隔（此值是不可变的，只可在初始化时赋值）"><a href="#3-4-5-设置内存缓存清除过期内存的时间间隔（此值是不可变的，只可在初始化时赋值）" class="headerlink" title="3.4.5 设置内存缓存清除过期内存的时间间隔（此值是不可变的，只可在初始化时赋值）"></a>3.4.5 设置内存缓存清除过期内存的时间间隔（此值是不可变的，只可在初始化时赋值）</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">cache.memoryStorage.config.cleanInterval &#x3D; 120</span></pre></td></tr></table></figure>
+
+<h6 id="3-4-6-设置磁盘缓存的容量"><a href="#3-4-6-设置磁盘缓存的容量" class="headerlink" title="3.4.6 设置磁盘缓存的容量"></a>3.4.6 设置磁盘缓存的容量</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">cache.diskStorage.config.sizeLimit &#x3D;  &#x3D; 500 * 1024 * 1024</span></pre></td></tr></table></figure>
+
+<h6 id="3-4-7-设置磁盘缓存的过期时间和过期时间更新策略"><a href="#3-4-7-设置磁盘缓存的过期时间和过期时间更新策略" class="headerlink" title="3.4.7 设置磁盘缓存的过期时间和过期时间更新策略"></a>3.4.7 设置磁盘缓存的过期时间和过期时间更新策略</h6><p>同内存缓存</p>
+<h5 id="3-5-手动的缓存图片"><a href="#3-5-手动的缓存图片" class="headerlink" title="3.5 手动的缓存图片"></a>3.5 手动的缓存图片</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 普通缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let image: UIImage &#x3D; &#x2F;&#x2F;...</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">cache.store(image, forKey: cacheKey)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 缓存原始数据</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">let data: Data &#x3D; &#x2F;&#x2F;...</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">let image: UIImage &#x3D; &#x2F;&#x2F;...</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">cache.store(image, original: data, forKey: cacheKey)</span></pre></td></tr></table></figure>
+
+<h5 id="3-6-清除缓存"><a href="#3-6-清除缓存" class="headerlink" title="3.6 清除缓存"></a>3.6 清除缓存</h5><h6 id="3-6-1-删除指定的缓存"><a href="#3-6-1-删除指定的缓存" class="headerlink" title="3.6.1 删除指定的缓存"></a>3.6.1 删除指定的缓存</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">forKey: cacheKey,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">processorIdentifier: processor.identifier,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">fromMemory: false,&#x2F;&#x2F;是否才能够内存缓存中删除</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">fromDisk: true &#x2F;&#x2F;是否从磁盘缓存中删除)&#123;&#125;</span></pre></td></tr></table></figure>
+
+<h6 id="3-6-2-清空内存缓存，清空过期的内存缓存"><a href="#3-6-2-清空内存缓存，清空过期的内存缓存" class="headerlink" title="3.6.2 清空内存缓存，清空过期的内存缓存"></a>3.6.2 清空内存缓存，清空过期的内存缓存</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 清空内存缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">cache.clearMemoryCache()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 清空过期的内存缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">cache.cleanExpiredMemoryCache()</span></pre></td></tr></table></figure>
+
+<h6 id="3-6-3-清空磁盘缓存，清空过期的磁盘缓存和超过磁盘容量限制的缓存"><a href="#3-6-3-清空磁盘缓存，清空过期的磁盘缓存和超过磁盘容量限制的缓存" class="headerlink" title="3.6.3 清空磁盘缓存，清空过期的磁盘缓存和超过磁盘容量限制的缓存"></a>3.6.3 清空磁盘缓存，清空过期的磁盘缓存和超过磁盘容量限制的缓存</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 清空磁盘缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">cache.clearDiskCache()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 清空过期的磁盘缓存和超过磁盘容量限制的缓存</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">cache.cleanExpiredDiskCache()</span></pre></td></tr></table></figure>
+
+<h5 id="3-7-获取磁盘缓存大小"><a href="#3-7-获取磁盘缓存大小" class="headerlink" title="3.7 获取磁盘缓存大小"></a>3.7 获取磁盘缓存大小</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">cache.calculateDiskStorageSize()</span></pre></td></tr></table></figure>
+
+<h3 id="4-下载"><a href="#4-下载" class="headerlink" title="4. 下载"></a>4. 下载</h3><h5 id="4-1-手动下载图片"><a href="#4-1-手动下载图片" class="headerlink" title="4.1 手动下载图片"></a>4.1 手动下载图片</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let downloader &#x3D; ImageDownloader.default</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">downloader.downloadImage(with: url) &#123; result in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    switch result &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    case .success(let value):</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">        print(value.image)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    case .failure(let error):</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">        print(error)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="4-2-在发送请求之前，修改-Request"><a href="#4-2-在发送请求之前，修改-Request" class="headerlink" title="4.2 在发送请求之前，修改 Request"></a>4.2 在发送请求之前，修改 Request</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 定义一个requestModifier</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let modifier &#x3D; AnyModifier &#123; request in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    var r &#x3D; request</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    r.setValue(&quot;abc&quot;, forHTTPHeaderField: &quot;Access-Token&quot;)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    return r</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 在手动下载时设置</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">downloader.downloadImage(with: url, options: [.requestModifier(modifier)]) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 在imageView的setImage的options里设置</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url, options: [.requestModifier(modifier)])</span></pre></td></tr></table></figure>
+
+<h5 id="4-3-设置超时时间"><a href="#4-3-设置超时时间" class="headerlink" title="4.3 设置超时时间"></a>4.3 设置超时时间</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">downloader.downloadTimeout &#x3D; 60</span></pre></td></tr></table></figure>
+
+<h5 id="4-4-处理重定向"><a href="#4-4-处理重定向" class="headerlink" title="4.4 处理重定向"></a>4.4 处理重定向</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 定义一个重定向的处理逻辑</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let anyRedirectHandler &#x3D; AnyRedirectHandler &#123; (task, resp, req, completionHandler) in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">        completionHandler(req)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 在手动下载时设置</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">downloader.downloadImage(with: url, options: [.redirectHandler(anyRedirectHandler)])</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 在imageView的setImage的options里设置</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">imageView.kf.setImage(with: url,  options: [.redirectHandler(anyRedirectHandler)])</span></pre></td></tr></table></figure>
+
+<h5 id="4-5-取消下载"><a href="#4-5-取消下载" class="headerlink" title="4.5 取消下载"></a>4.5 取消下载</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 取消手动下载</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">let task &#x3D; downloader.downloadImage(with: url) &#123; result in</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">task?.cancel()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 取消imageView的下载</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">let task &#x3D; imageView.kf.set(with: url)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">task?.cancel()</span></pre></td></tr></table></figure>
+
+<h3 id="5-预加载"><a href="#5-预加载" class="headerlink" title="5. 预加载"></a>5. 预加载</h3><p>使用方式如下，具体可参考<a href="https://juejin.im/post/5dea2640f265da33f03018a0" target="_blank" rel="noopener">Kingfisher 源码解析之 ImagePrefetcher</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">let urls &#x3D; [&quot;https:&#x2F;&#x2F;example.com&#x2F;image1.jpg&quot;, &quot;https:&#x2F;&#x2F;example.com&#x2F;image2.jpg&quot;]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">           .map &#123; URL(string: $0)! &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">let prefetcher &#x3D; ImagePrefetcher(urls: urls)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">prefetcher.start()</span></pre></td></tr></table></figure>
+
+<h3 id="7-一些有用的-options"><a href="#7-一些有用的-options" class="headerlink" title="7. 一些有用的 options"></a>7. 一些有用的 options</h3><ul>
+<li>loadDiskFileSynchronously 从磁盘中加载时，是否同步的去加载</li>
+<li>onlyFromCache 是否只从缓存中加载</li>
+<li>cacheMemoryOnly 是否只使用内存缓存</li>
+<li>forceRefresh 是否强制刷新，若值为 true，则每次都会重新下载</li>
+<li>backgroundDecode 是否在子线程去解码</li>
+<li>…其他配置请参考<a href="https://juejin.im/post/5de3cb89e51d45252f3b8400" target="_blank" rel="noopener">Kingfisher 源码解析之 Options 解释</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Swift/" rel="tag"># Swift</a>
+              <a href="/tags/Kingfisher/" rel="tag"># Kingfisher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/12/07/%E9%98%85%E8%AF%BBKingfisher%E6%BA%90%E7%A0%81%E7%9A%84%E4%B8%80%E4%BA%9B%E6%94%B6%E8%8E%B7/" rel="prev" title="阅读Kingfisher源码的一些收获">
+      <i class="fa fa-chevron-left"></i> 阅读Kingfisher源码的一些收获
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-基本使用"><span class="nav-number">1.</span> <span class="nav-text">1. 基本使用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-1-通过-Resource-设置图片"><span class="nav-number">1.0.1.</span> <span class="nav-text">1.1 通过 Resource 设置图片</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-2-通过-ImageDataProvider-设置图片"><span class="nav-number">1.0.2.</span> <span class="nav-text">1.2 通过 ImageDataProvider 设置图片</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-3-展示-placeholder"><span class="nav-number">1.0.3.</span> <span class="nav-text">1.3 展示 placeholder</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-4-加载-GIF-图"><span class="nav-number">1.0.4.</span> <span class="nav-text">1.4 加载 GIF 图</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-5-设置指示器"><span class="nav-number">1.0.5.</span> <span class="nav-text">1.5 设置指示器</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#1-6-设置-transition"><span class="nav-number">1.0.6.</span> <span class="nav-text">1.6 设置 transition</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Processor"><span class="nav-number">2.</span> <span class="nav-text">2. Processor</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-DefaultImageProcessor"><span class="nav-number">2.0.1.</span> <span class="nav-text">2.1 DefaultImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-2-BlendImageProcessor"><span class="nav-number">2.0.2.</span> <span class="nav-text">2.2 BlendImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-3-OverlayImageProcessor"><span class="nav-number">2.0.3.</span> <span class="nav-text">2.3 OverlayImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-4-BlurImageProcessor"><span class="nav-number">2.0.4.</span> <span class="nav-text">2.4 BlurImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-5-RoundCornerImageProcessor"><span class="nav-number">2.0.5.</span> <span class="nav-text">2.5 RoundCornerImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-6-TintImageProcessor"><span class="nav-number">2.0.6.</span> <span class="nav-text">2.6 TintImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-7-ColorControlsProcessor"><span class="nav-number">2.0.7.</span> <span class="nav-text">2.7 ColorControlsProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-8-BlackWhiteProcessor"><span class="nav-number">2.0.8.</span> <span class="nav-text">2.8 BlackWhiteProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-9-CroppingImageProcessor"><span class="nav-number">2.0.9.</span> <span class="nav-text">2.9 CroppingImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-10-DownsamplingImageProcessor"><span class="nav-number">2.0.10.</span> <span class="nav-text">2.10 DownsamplingImageProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-11-GeneralProcessor"><span class="nav-number">2.0.11.</span> <span class="nav-text">2.11 GeneralProcessor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-12-自定义-Processor"><span class="nav-number">2.0.12.</span> <span class="nav-text">2.12 自定义 Processor</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-缓存"><span class="nav-number">3.</span> <span class="nav-text">3 缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#3-1-使用自定义的-cacheKey"><span class="nav-number">3.0.1.</span> <span class="nav-text">3.1 使用自定义的 cacheKey</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-2-通过-cacheKey-判断是否缓存，以及缓存的类型"><span class="nav-number">3.0.2.</span> <span class="nav-text">3.2 通过 cacheKey 判断是否缓存，以及缓存的类型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-3-通过-cacheKey，从缓存中获取图片"><span class="nav-number">3.0.3.</span> <span class="nav-text">3.3 通过 cacheKey，从缓存中获取图片</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-4-设置缓存的配置"><span class="nav-number">3.0.4.</span> <span class="nav-text">3.4 设置缓存的配置</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#3-4-1-设置内存缓存的容量限制（默认值设置物理内存的四分之一）"><span class="nav-number">3.0.4.1.</span> <span class="nav-text">3.4.1 设置内存缓存的容量限制（默认值设置物理内存的四分之一）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-4-2-设置内存缓存的个数限制"><span class="nav-number">3.0.4.2.</span> <span class="nav-text">3.4.2 设置内存缓存的个数限制</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-4-3-设置内存缓存的过期时间（默认值是-300-秒）"><span class="nav-number">3.0.4.3.</span> <span class="nav-text">3.4.3 设置内存缓存的过期时间（默认值是 300 秒）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-4-4-设置内存缓存的过期时间更新策略"><span class="nav-number">3.0.4.4.</span> <span class="nav-text">3.4.4 设置内存缓存的过期时间更新策略</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-4-5-设置内存缓存清除过期内存的时间间隔（此值是不可变的，只可在初始化时赋值）"><span class="nav-number">3.0.4.5.</span> <span class="nav-text">3.4.5 设置内存缓存清除过期内存的时间间隔（此值是不可变的，只可在初始化时赋值）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-4-6-设置磁盘缓存的容量"><span class="nav-number">3.0.4.6.</span> <span class="nav-text">3.4.6 设置磁盘缓存的容量</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-4-7-设置磁盘缓存的过期时间和过期时间更新策略"><span class="nav-number">3.0.4.7.</span> <span class="nav-text">3.4.7 设置磁盘缓存的过期时间和过期时间更新策略</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-5-手动的缓存图片"><span class="nav-number">3.0.5.</span> <span class="nav-text">3.5 手动的缓存图片</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-6-清除缓存"><span class="nav-number">3.0.6.</span> <span class="nav-text">3.6 清除缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-1-删除指定的缓存"><span class="nav-number">3.0.6.1.</span> <span class="nav-text">3.6.1 删除指定的缓存</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-2-清空内存缓存，清空过期的内存缓存"><span class="nav-number">3.0.6.2.</span> <span class="nav-text">3.6.2 清空内存缓存，清空过期的内存缓存</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-6-3-清空磁盘缓存，清空过期的磁盘缓存和超过磁盘容量限制的缓存"><span class="nav-number">3.0.6.3.</span> <span class="nav-text">3.6.3 清空磁盘缓存，清空过期的磁盘缓存和超过磁盘容量限制的缓存</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-7-获取磁盘缓存大小"><span class="nav-number">3.0.7.</span> <span class="nav-text">3.7 获取磁盘缓存大小</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-下载"><span class="nav-number">4.</span> <span class="nav-text">4. 下载</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#4-1-手动下载图片"><span class="nav-number">4.0.1.</span> <span class="nav-text">4.1 手动下载图片</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-2-在发送请求之前，修改-Request"><span class="nav-number">4.0.2.</span> <span class="nav-text">4.2 在发送请求之前，修改 Request</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-3-设置超时时间"><span class="nav-number">4.0.3.</span> <span class="nav-text">4.3 设置超时时间</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-4-处理重定向"><span class="nav-number">4.0.4.</span> <span class="nav-text">4.4 处理重定向</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-5-取消下载"><span class="nav-number">4.0.5.</span> <span class="nav-text">4.5 取消下载</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-预加载"><span class="nav-number">5.</span> <span class="nav-text">5. 预加载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-一些有用的-options"><span class="nav-number">6.</span> <span class="nav-text">7. 一些有用的 options</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">李坤坤</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lkkwxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lkkwxy" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/wxylkk@163.com" title="E-Mail → wxylkk@163.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005055629872637/home" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005055629872637&#x2F;home" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/578ecc011532bc0061002f3e" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;578ecc011532bc0061002f3e" rel="noopener" target="_blank"><i class="fa fa-fw fa-custom juejin"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.0.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

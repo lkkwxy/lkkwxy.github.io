@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="1. 命名空间的使用Kingfisher 命名空间有 2 种方式，一种是使用协议加上包装器，另一种是把类型定义在枚举里。参考协议KingfisherCompatible和类型public enum MemoryStorage {},一个是空协议，扩展了一个 kf 计算属性，但 kf 里又有个 base 指向自己，另一个是空枚举，定义了带有自己命名空间的类型，Alamofire5.0中使用就是第二">
+<meta name="keywords" content="Swift,Kingfisher">
+<meta property="og:type" content="article">
+<meta property="og:title" content="阅读Kingfisher源码的一些收获">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;07&#x2F;%E9%98%85%E8%AF%BBKingfisher%E6%BA%90%E7%A0%81%E7%9A%84%E4%B8%80%E4%BA%9B%E6%94%B6%E8%8E%B7&#x2F;index.html">
+<meta property="og:site_name" content="李坤坤">
+<meta property="og:description" content="1. 命名空间的使用Kingfisher 命名空间有 2 种方式，一种是使用协议加上包装器，另一种是把类型定义在枚举里。参考协议KingfisherCompatible和类型public enum MemoryStorage {},一个是空协议，扩展了一个 kf 计算属性，但 kf 里又有个 base 指向自己，另一个是空枚举，定义了带有自己命名空间的类型，Alamofire5.0中使用就是第二">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https:&#x2F;&#x2F;user-gold-cdn.xitu.io&#x2F;2019&#x2F;12&#x2F;7&#x2F;16ee0ebe996bc73d?w&#x3D;1798&amp;h&#x3D;890&amp;f&#x3D;png&amp;s&#x3D;158996">
+<meta property="og:image" content="https:&#x2F;&#x2F;user-gold-cdn.xitu.io&#x2F;2019&#x2F;12&#x2F;7&#x2F;16ee0ec2f6961ae4?w&#x3D;918&amp;h&#x3D;287&amp;f&#x3D;png&amp;s&#x3D;94280">
+<meta property="og:updated_time" content="2019-12-06T16:00:00.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;user-gold-cdn.xitu.io&#x2F;2019&#x2F;12&#x2F;7&#x2F;16ee0ebe996bc73d?w&#x3D;1798&amp;h&#x3D;890&amp;f&#x3D;png&amp;s&#x3D;158996">
+
+<link rel="canonical" href="http://yoursite.com/2019/12/07/%E9%98%85%E8%AF%BBKingfisher%E6%BA%90%E7%A0%81%E7%9A%84%E4%B8%80%E4%BA%9B%E6%94%B6%E8%8E%B7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>阅读Kingfisher源码的一些收获 | 李坤坤</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">李坤坤</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/07/%E9%98%85%E8%AF%BBKingfisher%E6%BA%90%E7%A0%81%E7%9A%84%E4%B8%80%E4%BA%9B%E6%94%B6%E8%8E%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="李坤坤">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="李坤坤">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          阅读Kingfisher源码的一些收获
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-07 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-07T00:00:00+08:00">2019-12-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Swift/" itemprop="url" rel="index">
+                    <span itemprop="name">Swift</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://user-gold-cdn.xitu.io/2019/12/7/16ee0ebe996bc73d?w=1798&h=890&f=png&s=158996" alt=""></p>
+<h4 id="1-命名空间的使用"><a href="#1-命名空间的使用" class="headerlink" title="1. 命名空间的使用"></a>1. 命名空间的使用</h4><p>Kingfisher 命名空间有 2 种方式，一种是使用协议加上包装器，另一种是把类型定义在枚举里。参考协议<code>KingfisherCompatible</code>和类型<code>public enum MemoryStorage {}</code>,一个是空协议，扩展了一个 kf 计算属性，但 kf 里又有个 base 指向自己，另一个是空枚举，定义了带有自己命名空间的类型，<code>Alamofire5.0</code>中使用就是第二种</p>
+<h4 id="2-对枚举的了解"><a href="#2-对枚举的了解" class="headerlink" title="2. 对枚举的了解"></a>2. 对枚举的了解</h4><p>Kingfisher 使用了大量的枚举，我以前以为枚举就是为了区分状态，以提高代码的可读性，现在的理解是枚举定义了含义相同，但行为策略可能不同的一组值，比如<code>KingfisherOptionsInfoItem</code>定义了 Kingfisher 的各种配置，但每种配置的意义可能完全不相同，但都是配置，再<code>ExpirationExtending</code>定义了如何更新过期时间，</p>
+<h4 id="3-协议对提高扩展性的重要作用"><a href="#3-协议对提高扩展性的重要作用" class="headerlink" title="3. 协议对提高扩展性的重要作用"></a>3. 协议对提高扩展性的重要作用</h4><p>协议是定义了某种能力，由协议遵循者去实现这些能力，但是由于 Swift 中协议扩展的存在，就可以让协议自己就提供某些能力，只要让协议遵循者去遵循协议，就能自动获取这些能力，减少了遵循协议的复杂性。并且协议仅仅定义了某种能力，不涉及具体类型，更方面的去扩展。我比较喜欢的协议又<code>Resource</code>，<code>Placeholder</code>,<code>Processor</code></p>
+<h4 id="4-OptionSet-的使用"><a href="#4-OptionSet-的使用" class="headerlink" title="4. OptionSet 的使用"></a>4. OptionSet 的使用</h4><p>OptionSet 类似于 OC 的按位枚举，OptionSet 遵循了 RawRepresentable，需要提供了 rawValue 值，OptionSet 还遵循了 SetAlgebra 可以很方便的数组字面量进行赋值，我比较喜欢这个特性，第一次看到这么写<code>public static let all: RectCorner = [.topLeft, .topRight, .bottomLeft, .bottomRight]</code>，还挺迷糊的，怎么能把一个数组赋值结构体呢</p>
+<h4 id="5-加载高清大图的加载"><a href="#5-加载高清大图的加载" class="headerlink" title="5. 加载高清大图的加载"></a>5. 加载高清大图的加载</h4><p>高清大图如果直接加载，会占用较高的内存，为了减少内存的加载，可以使用下采样进行加载高清大图，这也是 Kingfisher 的 demo 中展示高清图的方式，这种方式有个弊端，就是如果我们需要对高清图进行方法展示的，可能会变的模糊，这时候可使用<code>CATiledLayer</code>展示高清图，它可分段绘制</p>
+<h4 id="6-加载-GIF-的-2-中方式"><a href="#6-加载-GIF-的-2-中方式" class="headerlink" title="6. 加载 GIF 的 2 中方式"></a>6. 加载 GIF 的 2 中方式</h4><ol>
+<li>从 GIF 图中获取所有的图片，利用 UIImage.animateImage()生成一个动图，赋值给 UIImageView</li>
+<li>自定义 ImageView 继承自 UIImageView，实现一个定时器根据相应的时间，展示 GIF 图对应的那一帧图片</li>
+</ol>
+<h4 id="7-判断图片格式的原理"><a href="#7-判断图片格式的原理" class="headerlink" title="7. 判断图片格式的原理"></a>7. 判断图片格式的原理</h4><p>一般图片格式的都在 data 的前几个字节里，只要按对应的规则去取，然后进行判断就行了</p>
+<h4 id="8-在子线程对图片进行解码"><a href="#8-在子线程对图片进行解码" class="headerlink" title="8. 在子线程对图片进行解码"></a>8. 在子线程对图片进行解码</h4><p>在子线程对图片进行解码就是在子线程里把 UIImage 里画到一个画布上，从画布上取出画好的图片</p>
+<h4 id="9-defer-对提升代码简洁的帮助"><a href="#9-defer-对提升代码简洁的帮助" class="headerlink" title="9. defer 对提升代码简洁的帮助"></a>9. defer 对提升代码简洁的帮助</h4><p>从下图中可看到 context 创建了 2 此，需要释放 2 次，释放只能在绘画之后才能释放，如果不用 defer，你会怎么写<br><img src="https://user-gold-cdn.xitu.io/2019/12/7/16ee0ec2f6961ae4?w=918&h=287&f=png&s=94280" alt=""></p>
+<h4 id="10-Kingfisher-使用方式如此简单，但也很方面的进行很多设置"><a href="#10-Kingfisher-使用方式如此简单，但也很方面的进行很多设置" class="headerlink" title="10. Kingfisher 使用方式如此简单，但也很方面的进行很多设置"></a>10. Kingfisher 使用方式如此简单，但也很方面的进行很多设置</h4><p>这里是因为对于每个配置项都有一个默认值或者对配置项为 nil 做了默认处理。这里还想说一下，我们在配置 options 的时候，options 的类型是<code>public typealias KingfisherOptionsInfo = [KingfisherOptionsInfoItem]</code>,Kingfisher 中真正用的时候是结构体<code>KingfisherParsedOptionsInfo</code> ,由于配置项属性太多，直接使用结构体，初始化结构体的时候不方便，而使用数组，再通过遍历生成<code>KingfisherParsedOptionsInfo</code>，会方便很多，为喵神的细节处理点赞</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Swift/" rel="tag"># Swift</a>
+              <a href="/tags/Kingfisher/" rel="tag"># Kingfisher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/12/06/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImagePrefetcher/" rel="prev" title="Kingfisher源码解析之ImagePrefetcher">
+      <i class="fa fa-chevron-left"></i> Kingfisher源码解析之ImagePrefetcher
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/" rel="next" title="Kingfisher源码解析之使用">
+      Kingfisher源码解析之使用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-命名空间的使用"><span class="nav-number">1.</span> <span class="nav-text">1. 命名空间的使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-对枚举的了解"><span class="nav-number">2.</span> <span class="nav-text">2. 对枚举的了解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-协议对提高扩展性的重要作用"><span class="nav-number">3.</span> <span class="nav-text">3. 协议对提高扩展性的重要作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-OptionSet-的使用"><span class="nav-number">4.</span> <span class="nav-text">4. OptionSet 的使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-加载高清大图的加载"><span class="nav-number">5.</span> <span class="nav-text">5. 加载高清大图的加载</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-加载-GIF-的-2-中方式"><span class="nav-number">6.</span> <span class="nav-text">6. 加载 GIF 的 2 中方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-判断图片格式的原理"><span class="nav-number">7.</span> <span class="nav-text">7. 判断图片格式的原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8-在子线程对图片进行解码"><span class="nav-number">8.</span> <span class="nav-text">8. 在子线程对图片进行解码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#9-defer-对提升代码简洁的帮助"><span class="nav-number">9.</span> <span class="nav-text">9. defer 对提升代码简洁的帮助</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#10-Kingfisher-使用方式如此简单，但也很方面的进行很多设置"><span class="nav-number">10.</span> <span class="nav-text">10. Kingfisher 使用方式如此简单，但也很方面的进行很多设置</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">李坤坤</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lkkwxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lkkwxy" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/wxylkk@163.com" title="E-Mail → wxylkk@163.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005055629872637/home" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005055629872637&#x2F;home" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/578ecc011532bc0061002f3e" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;578ecc011532bc0061002f3e" rel="noopener" target="_blank"><i class="fa fa-fw fa-custom juejin"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.0.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

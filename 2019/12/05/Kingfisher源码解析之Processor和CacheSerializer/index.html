@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta name="keywords" content="Swift,Kingfisher">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kingfisher源码解析之Processor和CacheSerializer">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;05&#x2F;Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer&#x2F;index.html">
+<meta property="og:site_name" content="李坤坤">
+<meta property="og:description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-12-04T16:00:00.000Z">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kingfisher源码解析之Processor和CacheSerializer | 李坤坤</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">李坤坤</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="李坤坤">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="李坤坤">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kingfisher源码解析之Processor和CacheSerializer
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-05 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-05T00:00:00+08:00">2019-12-05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Swift/" itemprop="url" rel="index">
+                    <span itemprop="name">Swift</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/">Kingfisher 源码解析之使用</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/">Kingfisher 源码解析之 Options 解释</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B/">Kingfisher 源码解析之加载流程</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/">Kingfisher 源码解析之加载动图</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/">Kingfisher 源码解析之 ImageCache</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/">Kingfisher 源码解析之 Processor 和 CacheSerializer</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/06/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImagePrefetcher/">Kingfisher 源码解析之 ImagePrefetcher</a></li>
+</ul>
+<p>本篇文章主要介绍 Processor 和 CacheSerializer 的基本定义和调用时机，以及利用二者扩展 Kingfisher 以支持 webp 格式的图片</p>
+<h3 id="Processor"><a href="#Processor" class="headerlink" title="Processor"></a>Processor</h3><h5 id="Processor-介绍"><a href="#Processor-介绍" class="headerlink" title="Processor 介绍"></a>Processor 介绍</h5><p>Kingfisher 中 Processor 是一个协议，定义了对原始数据进行加工处理转换成 UIImage 的能力（Kingfisher 缓存的是处理成功之后的 UIImage，根据 options 的值来决定是否缓存原始数据）。<br>这里的原始数据是指 ImageProcessItem，它是一个枚举类型。Processor 和 ImageProcessItem 定义如下，都是特别简单</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public enum ImageProcessItem &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    case image(KFCrossPlatformImage)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    case data(Data)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">public protocol ImageProcessor &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;标识符，在缓存的时候用到，用于区分原始数据和处理加工之后的数据的</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    var identifier: String &#123; get &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    &#x2F;&#x2F;交给具体的实现类去实现，ImageProcessItem，最终返回一个UIImage</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    func process(item: ImageProcessItem, options: KingfisherParsedOptionsInfo) -&gt; KFCrossPlatformImage?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="关于-Processor-的两个问题"><a href="#关于-Processor-的两个问题" class="headerlink" title="关于 Processor 的两个问题"></a>关于 Processor 的两个问题</h5><p>如果你了解过 Kingfisher，请尝试回答下这 2 个问题</p>
+<ol>
+<li>ImageProcessor.process 都在什么时候调用呢？</li>
+<li>ImageProcessItem 关联了 2 种类型，一种是 Data，另一种是 UIImage，那么这 2 种类型分别什么时候会用到呢？</li>
+</ol>
+<p>ImageProcessor.process 在什么时候调用，在调用的时候会传递什么类型的数据？</p>
+<ol>
+<li>当从网络上下载图片成功之后，会调用 process 把下载成功的 data 加工处理成我们需要的 UIImage。很明显这种情况下传递的是 Data 类型。</li>
+<li>当 source 是 ImageDataProvider 时，从 source 中获取到 Data 之后，会调用 process 把 data 加工处理成我们需要的 UIImage。很明显这种情况下传递的也是 Data 类型。</li>
+<li>当读取缓存失败，但读取原始数据缓存成功之后，会调用 process 把原始数据加工处理成我们需要的 UIImage。这种情况会先把读取到的 data 使用 cacheSerializer 反序列化为 UIImage，然后传递 UIImage 类型</li>
+</ol>
+<h3 id="CacheSerializer"><a href="#CacheSerializer" class="headerlink" title="CacheSerializer"></a>CacheSerializer</h3><h5 id="CacheSerializer-介绍"><a href="#CacheSerializer-介绍" class="headerlink" title="CacheSerializer 介绍"></a>CacheSerializer 介绍</h5><p>Kingfisher 中 CacheSerializer 定义了图片序列化和反序列化的能力，也是一个协议</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public protocol CacheSerializer &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    func data(with image: KFCrossPlatformImage, original: Data?) -&gt; Data?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    func image(with data: Data, options: KingfisherParsedOptionsInfo) -&gt; KFCrossPlatformImage?</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="CacheSerializer-的调用时机"><a href="#CacheSerializer-的调用时机" class="headerlink" title="CacheSerializer 的调用时机"></a>CacheSerializer 的调用时机</h5><ol>
+<li>当需要磁盘缓存时，会调用<code>func data(with image: KFCrossPlatformImage, original: Data?) -&gt; Data?</code>把 image 序列化成 data，以便写入文件</li>
+<li>当从磁盘读取数据时，会调用<code>func image(with data: Data, options: KingfisherParsedOptionsInfo) -&gt; KFCrossPlatformImage?</code>把 data 反序列化为 UIImage</li>
+</ol>
+<h3 id="使用-Processor-和-CacheSerializer-扩展-Kingfisher，使-Kingfisher-支持-webP-格式的图片"><a href="#使用-Processor-和-CacheSerializer-扩展-Kingfisher，使-Kingfisher-支持-webP-格式的图片" class="headerlink" title="使用 Processor 和 CacheSerializer 扩展 Kingfisher，使 Kingfisher 支持 webP 格式的图片"></a>使用 Processor 和 CacheSerializer 扩展 Kingfisher，使 Kingfisher 支持 webP 格式的图片</h3><p>Kingfisher 本身是不支持 webp 格式的图片，但是可以利用 Processor 和 CacheSerializer 对 Kingfisher 进行扩展，让 Kingfisher 支持 webP 格式的图片</p>
+<blockquote>
+<p>WebP 标准是 Google 定制的，迄今为止也只有 Google 发布的 libwebp 实现了该的编解码 。 所以这个库也是该格式的事实标准。</p>
+</blockquote>
+<p>因此要想支持 webp 格式的图片，需要依赖 libwebp 库，用来实现图片的编码和解码，对于这块的代码我是从<a href="https://github.com/SDWebImage/SDWebImageWebPCoder" target="_blank" rel="noopener">SDWebImageWebPCoder</a>复制过来的，并且去掉了对动图的支持和一些 SD 配置的代码，如果你对这块感兴趣，请参考源码，由于 SD 是 OC 写的，所以这部分我用的也是 OC，最终给 UIImage 添加了一个分类，提供了下面 2 个方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">@interface UIImage (WebP)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;序列化为Data</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">@property(nonatomic,strong,readonly,nullable) NSData *webPData;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;通过data反序列化为UIImage</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">+ (nullable instancetype)imageWithWebPData:(NSData *)webPdata;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">+</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">@end</span></pre></td></tr></table></figure>
+
+<h5 id="实现-Processor"><a href="#实现-Processor" class="headerlink" title="实现 Processor"></a>实现 Processor</h5><p>在 process 判断 item 的类型，若是 image 则直接返回，若是 data 则反序列化为 UIImage</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public struct WebPProcessor: ImageProcessor &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    public static let &#96;default&#96; &#x3D; WebPProcessor()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    public let identifier &#x3D; &quot;WebPProcessor&quot;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">    public init() &#123;&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    public func process(item: ImageProcessItem, options: KingfisherParsedOptionsInfo) -&gt; KFCrossPlatformImage? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">        switch item &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">        case .image(let image):</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">            return image</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">        case .data(let data):</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">            return UIImage(webPData: data)</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">        &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="CacheSerializer-1"><a href="#CacheSerializer-1" class="headerlink" title="CacheSerializer"></a>CacheSerializer</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">public struct WebPCacheSerializer: CacheSerializer &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    public static let &#96;default&#96; &#x3D; WebPCacheSerializer()</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">    private init() &#123;&#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    public func data(with image: KFCrossPlatformImage, original: Data?) -&gt; Data? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">        return image.webPData;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">    public func image(with data: Data, options: KingfisherParsedOptionsInfo) -&gt; KFCrossPlatformImage? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">        return UIImage(webPData: data);</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">    &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h5 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">if let url &#x3D; URL(string:&quot;http:&#x2F;&#x2F;q21556z4z.bkt.clouddn.com&#x2F;123.webp?e&#x3D;1575537931&amp;token&#x3D;7n8bncOpnUSrN4mijeEAJRdVXnC-jm-mk5qTjKjR:L1_MWy3xugv9ct6PD294CHzwiSE&#x3D;&amp;attname&#x3D;&quot;) &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    imageView.kf.setImage(</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">        with: url,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">        options: [.processor(WebPProcessor.default), .cacheSerializer(WebPCacheSerializer.default)]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">    )</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+
+<h3 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h3><p>虽说上面的代码都比较简单，但是我感觉 Kingfisher 的这个设计真的挺好的，可扩展支持任意类型的图片，并且 Processor 是用来加工处理图片的，能做的还有其他方面，比如 Kingfisher 中提供了多种实现类，比如圆角的 RoundCornerImageProcessor，显示高清图的 DownsamplingImageProcessor，组装多种 Processor 的 GeneralProcessor。<br><a href="https://github.com/lkkwxy/webpDemo" target="_blank" rel="noopener">demo 地址</a></p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://github.com/SDWebImage/SDWebImageWebPCoder" target="_blank" rel="noopener">SDWebImageWebPCoder</a><br><a href="https://blog.ibireme.com/2015/11/02/mobile_image_benchmark/" target="_blank" rel="noopener">移动端图片格式调研</a><br><a href="https://developers.google.com/speed/webp/" target="_blank" rel="noopener">libwebp 地址</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Swift/" rel="tag"># Swift</a>
+              <a href="/tags/Kingfisher/" rel="tag"># Kingfisher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/" rel="prev" title="Kingfisher源码解析之ImageCache">
+      <i class="fa fa-chevron-left"></i> Kingfisher源码解析之ImageCache
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/12/06/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImagePrefetcher/" rel="next" title="Kingfisher源码解析之ImagePrefetcher">
+      Kingfisher源码解析之ImagePrefetcher <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Processor"><span class="nav-number">1.</span> <span class="nav-text">Processor</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Processor-介绍"><span class="nav-number">1.0.1.</span> <span class="nav-text">Processor 介绍</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#关于-Processor-的两个问题"><span class="nav-number">1.0.2.</span> <span class="nav-text">关于 Processor 的两个问题</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CacheSerializer"><span class="nav-number">2.</span> <span class="nav-text">CacheSerializer</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#CacheSerializer-介绍"><span class="nav-number">2.0.1.</span> <span class="nav-text">CacheSerializer 介绍</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#CacheSerializer-的调用时机"><span class="nav-number">2.0.2.</span> <span class="nav-text">CacheSerializer 的调用时机</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用-Processor-和-CacheSerializer-扩展-Kingfisher，使-Kingfisher-支持-webP-格式的图片"><span class="nav-number">3.</span> <span class="nav-text">使用 Processor 和 CacheSerializer 扩展 Kingfisher，使 Kingfisher 支持 webP 格式的图片</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#实现-Processor"><span class="nav-number">3.0.1.</span> <span class="nav-text">实现 Processor</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#CacheSerializer-1"><span class="nav-number">3.0.2.</span> <span class="nav-text">CacheSerializer</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#使用"><span class="nav-number">3.0.3.</span> <span class="nav-text">使用</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#补充"><span class="nav-number">4.</span> <span class="nav-text">补充</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">李坤坤</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lkkwxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lkkwxy" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/wxylkk@163.com" title="E-Mail → wxylkk@163.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005055629872637/home" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005055629872637&#x2F;home" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/578ecc011532bc0061002f3e" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;578ecc011532bc0061002f3e" rel="noopener" target="_blank"><i class="fa fa-fw fa-custom juejin"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.0.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

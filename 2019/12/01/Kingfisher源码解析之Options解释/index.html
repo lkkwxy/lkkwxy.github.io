@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://yoursite.com').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta name="keywords" content="Swift,Kingfisher">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kingfisher源码解析之Options解释">
+<meta property="og:url" content="http:&#x2F;&#x2F;yoursite.com&#x2F;2019&#x2F;12&#x2F;01&#x2F;Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A&#x2F;index.html">
+<meta property="og:site_name" content="李坤坤">
+<meta property="og:description" content="Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教   Kingfisher 源码解析之使用  Kingfisher 源码解析之 Options 解释  Kingfisher 源码解析之加载流程  Kingfisher 源码解析之加载动图  Kingfisher 源码解析之 ImageCache  Kingfisher 源码解析之 Processor 和 CacheSeria">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-11-30T16:00:00.000Z">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kingfisher源码解析之Options解释 | 李坤坤</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">李坤坤</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="default">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="李坤坤">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="李坤坤">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kingfisher源码解析之Options解释
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-01 00:00:00" itemprop="dateCreated datePublished" datetime="2019-12-01T00:00:00+08:00">2019-12-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Swift/" itemprop="url" rel="index">
+                    <span itemprop="name">Swift</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Kingfisher 源码解析系列，由于水平有限，哪里有错，肯请不吝赐教</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/07/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E4%BD%BF%E7%94%A8/">Kingfisher 源码解析之使用</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/01/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BOptions%E8%A7%A3%E9%87%8A/">Kingfisher 源码解析之 Options 解释</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B/">Kingfisher 源码解析之加载流程</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/">Kingfisher 源码解析之加载动图</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/04/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImageCache/">Kingfisher 源码解析之 ImageCache</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/05/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BProcessor%E5%92%8CCacheSerializer/">Kingfisher 源码解析之 Processor 和 CacheSerializer</a></li>
+<li><input checked="" disabled="" type="checkbox"> <a href="/2019/12/06/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8BImagePrefetcher/">Kingfisher 源码解析之 ImagePrefetcher</a></li>
+</ul>
+<ol>
+<li><p>targetCache,originalCache</p>
+<ul>
+<li>类型 ImageCache,Kingfisher 中的缓存管理器，提供内存和磁盘缓存</li>
+<li>targetCache 最终展示出来的缓存管理器</li>
+<li>originalCache 原始数据的缓存管理器</li>
+<li>默认值都为 nil，为 nil 时，使用 ImageCache(name: “default”)</li>
+</ul>
+</li>
+<li><p>downloader</p>
+<ul>
+<li>类型 ImageDownloader，图片下载器，提供图片下载的功能</li>
+<li>默认值为 nil，为 nil 时，使用 ImageDownloader(name: “default”)</li>
+</ul>
+</li>
+<li><p>downloadPriority 下载优先级</p>
+</li>
+<li><p>transition</p>
+<ul>
+<li>类型 ImageTransition，默认是为 ImageTransition.none</li>
+<li>为 imageView 显示 image 的时候提供过渡动画</li>
+</ul>
+</li>
+<li><p>forceTransition</p>
+<ul>
+<li>类型为 Bool，默认值 false</li>
+<li>是否强制使用过渡动画，当值为 true 时，transition 不为.none 时就使用过渡动画，当值为 false 时，只有 transition 不为.none 并且不使用缓存时，才使用缓存动画</li>
+</ul>
+</li>
+<li><p>forceRefresh 是否强制刷新，若值为 true，则不使用缓存</p>
+</li>
+<li><p>fromMemoryCacheOrRefresh 当值为 true 时，刷新的时候，若使用缓存，则只使用内存缓存，不去磁盘缓存</p>
+</li>
+<li><p>cacheMemoryOnly 是否只使用内存缓存</p>
+</li>
+<li><p>waitForCache 是否等待缓存完成，再调用回调</p>
+</li>
+<li><p>onlyFromCache 是否只从缓存中加载</p>
+</li>
+<li><p>backgroundDecode 是否在子线程去解码</p>
+</li>
+<li><p>preloadAllAnimationData</p>
+<ul>
+<li>是否预加载 GIF 图每一帧画面,默认值为 false</li>
+<li>若使用 UIImageView.setImage(),去加载图片，则会被强制设置成 true，因为</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"> @objc extension UIImageView &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">    func shouldPreloadAllAnimation() -&gt; Bool &#123; return true &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line"> &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"> public func setImage(</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">    with source: Source?,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">    placeholder: Placeholder? &#x3D; nil,</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">    options: KingfisherOptionsInfo? &#x3D; nil ...</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">   -&gt; DownloadTask? &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">         ...</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">        &#x2F;&#x2F;若shouldPreloadAllAnimation()的值为true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">        &#x2F;&#x2F;则把preloadAllAnimationData设为true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">        &#x2F;&#x2F;而ImageView中的shouldPreloadAllAnimation()一直为true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">         if base.shouldPreloadAllAnimation() &#123;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">            options.preloadAllAnimationData &#x3D; true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">         &#125;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">        ...</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">&#125;</span></pre></td></tr></table></figure>
+</li>
+<li><p>onlyLoadFirstFrame 若图片是 GIF 图时，是否只显示第一帧</p>
+</li>
+<li><p>callbackQueue,processingQueue</p>
+<ul>
+<li>callbackQueue,图片处理结束之后，回调所在的队列，默认值 mainCurrentOrAsync</li>
+<li>processingQueue，处理图片时所在的队列，比如利用 processor 给图片添加圆角等操作时，所在的队列，默认使用一个串行的子队列</li>
+<li>一共有四个值可选择.mainAsync,.mainCurrentOrAsync,.untouch,.dispatch(DispatchQueue)</li>
+<li>.mainAsync 主线程中异步执行</li>
+<li>.mainCurrentOrAsync，若当前线程是主线程，则直接执行，否则在主线程异步执行</li>
+<li>.untouch 不改变当前所在的线程</li>
+<li>.dispatch(DispatchQueue) 在指定的队列中执行</li>
+</ul>
+</li>
+<li><p>requestModifier 发送请求时对原始的请求进行修改，返回新的 Request</p>
+</li>
+<li><p>redirectHandler 当请求发生重定向是，自定义的一些处理</p>
+</li>
+<li><p>processor 加工者，自定义 data|image 转成 image 的逻辑，</p>
+</li>
+<li><p>imageModifier image 修饰器，对 image 做一些修改，比如返回 image.withRenderingMode(renderingMode)</p>
+</li>
+<li><p>cacheSerializer 定义图片序列化和反序列化</p>
+</li>
+<li><p>keepCurrentImageWhileLoading 当加载一个新图时，是否要保持当前的图片</p>
+</li>
+<li><p>cacheOriginalImage 是否要缓存原始的数据</p>
+</li>
+<li><p>onFailureImage 加载失败时，要展示的图片</p>
+</li>
+<li><p>alsoPrefetchToMemory 预加载时，需要从磁盘加载时，是否也需要同步到内存中</p>
+</li>
+<li><p>loadDiskFileSynchronously 从磁盘中加载时，是否同步的去加载</p>
+</li>
+<li><p>memoryCacheExpiration，diskCacheExpiration 设置内存、磁盘缓存过期时间</p>
+</li>
+<li><p>memoryCacheAccessExtendingExpiration</p>
+<ul>
+<li>当从内存、磁盘中取图片时，往后延长过期时间的策略</li>
+<li>有以下几个值：.none,.cacheTime,.expirationTime(_ expiration: StorageExpiration)</li>
+<li>.none 保持原来的过期时间</li>
+<li>.cacheTime 设置过期时间为当前时间加上原来的过期时间</li>
+<li>.expirationTime(_ expiration: StorageExpiration) 设置过期时间到指定时间</li>
+</ul>
+</li>
+<li><p>alternativeSources 当加载失败时，可供替代的数据源</p>
+</li>
+<li><p>onDataReceived 接收到数据时，需要回调时，可设置此属性，比如 setImage 时设置的 DownloadProgressBlock，就是在里面封装了此属性</p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Swift/" rel="tag"># Swift</a>
+              <a href="/tags/Kingfisher/" rel="tag"># Kingfisher</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/10/14/%E5%BD%93%E5%B0%8F%E7%A8%8B%E5%BA%8F%E7%9A%84flex%E5%B8%83%E5%B1%80%E9%81%87%E5%88%B0button%E6%97%B6%EF%BC%8Cjustify-content%E4%B8%8D%E8%B5%B7%E4%BD%9C%E7%94%A8%E7%9A%84%E5%8E%9F%E5%9B%A0%E5%8F%8A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/" rel="prev" title="当小程序的flex布局遇到button时，justify-content不起作用的原因及解决方案">
+      <i class="fa fa-chevron-left"></i> 当小程序的flex布局遇到button时，justify-content不起作用的原因及解决方案
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/12/02/Kingfisher%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B9%8B%E5%8A%A0%E8%BD%BD%E5%8A%A8%E5%9B%BE/" rel="next" title="Kingfisher源码解析之加载动图">
+      Kingfisher源码解析之加载动图 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">李坤坤</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">32</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/lkkwxy" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;lkkwxy" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/wxylkk@163.com" title="E-Mail → wxylkk@163.com"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005055629872637/home" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005055629872637&#x2F;home" rel="noopener" target="_blank"><i class="fa fa-fw fa-weibo"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/578ecc011532bc0061002f3e" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;578ecc011532bc0061002f3e" rel="noopener" target="_blank"><i class="fa fa-fw fa-custom juejin"></i>掘金</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">李坤坤</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> v4.0.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Theme – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
